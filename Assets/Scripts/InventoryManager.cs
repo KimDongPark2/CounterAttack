@@ -1,26 +1,39 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class InventoryManager : MonoBehaviour
 {
     public static InventoryManager Instance;
 
     [Header("Inventory Settings")]
-    public GameObject itemSlotPrefab;
-    public Transform inventoryContent;
+    public Player_State state;
+    public ItemSlot[] itemSlots;
     private void Awake()
     {
         Instance = this;
     }
-
-    public void AddItemUI(string itemName, int number, Sprite Image)
+    public void SelectItem(int num)
     {
-        GameObject newSlot = Instantiate(itemSlotPrefab);
-        newSlot.transform.SetParent(inventoryContent, false);
-        ItemSlot slotScript = newSlot.GetComponent<ItemSlot>();
-
-        if (slotScript != null)
+        state.handIndex = num;
+        Debug.Log($"{num} Pressed");
+        // 모든 슬롯 선택 해제 후 해당 슬롯만 선택
+        for (int i = 0; i < itemSlots.Length; i++)
         {
-            slotScript.Setup(itemName, number, Image);
+            itemSlots[i].Deselect();
+        }
+        int index = num - 1; // 1~5 키 → 0~4 인덱스
+        if (index >= 0 && index < itemSlots.Length)
+        {
+            itemSlots[index].Select();
         }
     }
+    public void AddItemUI(string itemName, int num, Sprite Image)
+    {
+        if (num >= 0 && num < itemSlots.Length)
+        {
+            itemSlots[num].Setup(itemName, num, Image);
+        }
+    }
+
+
 }
