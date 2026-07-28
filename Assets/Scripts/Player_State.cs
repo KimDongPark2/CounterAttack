@@ -51,4 +51,20 @@ public class Player_State : MonoBehaviour
                 return item.amount;
         return 0;
     }
+    public void RemoveItemAtSlot(int slotIndex)
+    {
+        int count = 0;
+        for (int i = 0; i < inventoryList.Count; i++)
+        {
+            count += inventoryList[i].amount;
+            if (slotIndex < count)
+            {
+                inventoryList[i].amount--;
+                inventoryCnt--;
+                if (inventoryList[i].amount <= 0)
+                    inventoryList.RemoveAt(i);
+                return;
+            }
+        }
+    }
 }

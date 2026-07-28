@@ -34,6 +34,11 @@ public class InventoryManager : MonoBehaviour
             itemSlots[num].Setup(itemName, num, Image);
         }
     }
-
-
+    public void ClearSlotUI(int slotIndex)
+    {
+        if (slotIndex >= 0 && slotIndex < itemSlots.Length)
+        {
+            itemSlots[slotIndex].Clear();
+        }
+    }
 }

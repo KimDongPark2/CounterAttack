@@ -76,10 +76,8 @@ public class Player_Interaction : MonoBehaviour
         if (value.isPressed)
         {
             Debug.Log("아이템 버림");
-            
         }
     }
-    // 인벤토리 슬롯 선택 (PlayerInput 콜백)
     public void OnInventory_1(InputValue value) { if (value.isPressed) inventoryManager.SelectItem(1); }
     public void OnInventory_2(InputValue value) { if (value.isPressed) inventoryManager.SelectItem(2); }
     public void OnInventory_3(InputValue value) { if (value.isPressed) inventoryManager.SelectItem(3); }
