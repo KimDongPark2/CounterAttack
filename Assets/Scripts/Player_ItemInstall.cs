@@ -5,6 +5,8 @@ public class Player_ItemInstall : MonoBehaviour
 {
     [Header("Preview Settings")]
     public float installRange = 10f;
+    public float snapRadius = 0.5f;
+    public bool snapRotation = true;
     public Camera playerCamera;
 
     [HideInInspector]
@@ -13,6 +15,7 @@ public class Player_ItemInstall : MonoBehaviour
     public bool isHoldingF = false;
     private bool canInstall = false;
     private Vector3 installPosition;
+    private Quaternion finalInstallRotation = Quaternion.identity;
 
     private Player_State state;
     private InventoryManager inventoryManager;
@@ -184,6 +187,8 @@ public class Player_ItemInstall : MonoBehaviour
             return;
         }
 
+        finalInstallRotation = Quaternion.Euler(0, currentRotationY, 0);
+
         // Raycast 시 Ignore Raycast 트리거 옵션 지정
         if (Physics.Raycast(ray, out hitInfo, installRange, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
         {
@@ -191,6 +196,33 @@ public class Player_ItemInstall : MonoBehaviour
             if (hitInfo.collider.CompareTag("InstallAvailable"))
             {
                 canInstall = true;
+
+                // --- 스냅(Snap) 로직 ---
+                Transform hitTransform = hitInfo.collider.transform;
+                Transform closestPos = null;
+                float minDistance = snapRadius;
+
+                foreach (Transform child in hitTransform.GetComponentsInChildren<Transform>())
+                {
+                    if (child.name.StartsWith("Pos"))
+                    {
+                        float dist = Vector3.Distance(hitInfo.point, child.position);
+                        if (dist < minDistance)
+                        {
+                            minDistance = dist;
+                            closestPos = child;
+                        }
+                    }
+                }
+
+                if (closestPos != null)
+                {
+                    installPosition = closestPos.position;
+                    if (snapRotation)
+                    {
+                        finalInstallRotation = closestPos.rotation * Quaternion.Euler(0, currentRotationY, 0);
+                    }
+                }
             }
             else
             {
@@ -213,19 +245,17 @@ public class Player_ItemInstall : MonoBehaviour
             }
         }
 
-        Quaternion targetRotation = Quaternion.Euler(0, currentRotationY, 0);
-
         if (prevObject == null)
         {
             Debug.Log($"[ItemInstall] 미리보기 생성 완료: {handSlot.itemPrefab.name} (위치: {installPosition})");
-            prevObject = Instantiate(handSlot.itemPrefab, installPosition, targetRotation);
+            prevObject = Instantiate(handSlot.itemPrefab, installPosition, finalInstallRotation);
             prevObject.SetActive(true);
             SetPreviewMode(prevObject, canInstall);
         }
         else
         {
             prevObject.transform.position = installPosition;
-            prevObject.transform.rotation = targetRotation;
+            prevObject.transform.rotation = finalInstallRotation;
             prevObject.SetActive(true);
             UpdatePreviewColor(prevObject, canInstall);
         }
@@ -347,8 +377,7 @@ public class Player_ItemInstall : MonoBehaviour
         ItemSlot handSlot = GetHandSlot();
         if (handSlot == null || handSlot.itemPrefab == null) return;
 
-        Quaternion targetRotation = Quaternion.Euler(0, currentRotationY, 0);
-        GameObject installed = Instantiate(handSlot.itemPrefab, installPosition, targetRotation);
+        GameObject installed = Instantiate(handSlot.itemPrefab, installPosition, finalInstallRotation);
         installed.tag = "Item";
         installed.SetActive(true);
 

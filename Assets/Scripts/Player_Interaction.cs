@@ -30,6 +30,7 @@ public class Player_Interaction : MonoBehaviour
     private void Update()
     {
         CheckItem();
+        HandleInventoryInput();
     }
     private void Init()
     {
@@ -48,7 +49,7 @@ public class Player_Interaction : MonoBehaviour
                 curTarget = hitInfo.collider.gameObject;
                 Item_info info = curTarget.GetComponent<Item_info>();
                 noticeText.gameObject.SetActive(true);
-                if (state.inventoryCnt < 5)
+                if (state.inventoryCnt < state.inventoryRestrict)
                     noticeText.text = $"(F) {info.Name} 집기";
                 else
                     noticeText.text = "인벤토리가 부족합니다.";
@@ -62,12 +63,12 @@ public class Player_Interaction : MonoBehaviour
 
     public bool CanPickUpItem()
     {
-        return curTarget != null && state.inventoryCnt < 5;
+        return curTarget != null && state.inventoryCnt < state.inventoryRestrict;
     }
 
     public void OnInteract(InputValue value)
     { 
-        if (value.isPressed && curTarget != null && (state.inventoryCnt < 5))
+        if (value.isPressed && curTarget != null && (state.inventoryCnt < state.inventoryRestrict))
         {
             curitemInfo = curTarget.GetComponent<Item_info>();
             if (curitemInfo == null) return;
@@ -108,9 +109,47 @@ public class Player_Interaction : MonoBehaviour
             Debug.Log("아이템 버림");
         }
     }
-    public void OnInventory_1(InputValue value) { if (value.isPressed && !itemInstall.isHoldingF) inventoryManager.SelectItem(1); }
-    public void OnInventory_2(InputValue value) { if (value.isPressed && !itemInstall.isHoldingF) inventoryManager.SelectItem(2); }
-    public void OnInventory_3(InputValue value) { if (value.isPressed && !itemInstall.isHoldingF) inventoryManager.SelectItem(3); }
-    public void OnInventory_4(InputValue value) { if (value.isPressed && !itemInstall.isHoldingF) inventoryManager.SelectItem(4); }
-    public void OnInventory_5(InputValue value) { if (value.isPressed && !itemInstall.isHoldingF) inventoryManager.SelectItem(5); }
+    private void HandleInventoryInput()
+    {
+        // 설치 중(F키 홀드)일 때는 슬롯 변경 불가
+        if (itemInstall != null && itemInstall.isHoldingF) return;
+
+        int restrict = state.inventoryRestrict;
+
+        // 1. 키보드 숫자키 (1~0) 자동 체크 루프
+        if (Keyboard.current != null)
+        {
+            // 인덱스 0~9는 슬롯 1~10 (키보드 1~9, 0) 매칭
+            Key[] keys = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, 
+                           Key.Digit6, Key.Digit7, Key.Digit8, Key.Digit9, Key.Digit0 };
+            
+            for (int i = 0; i < keys.Length; i++)
+            {
+                int slotNum = i + 1; // 1~10
+                if (slotNum <= restrict && Keyboard.current[keys[i]].wasPressedThisFrame)
+                {
+                    inventoryManager.SelectItem(slotNum);
+                    break;
+                }
+            }
+        }
+
+        // 2. 마우스 휠(Scroll)을 이용한 인벤토리 슬롯 변경 (편의성 기능)
+        if (Mouse.current != null && state.handIndex > 0)
+        {
+            float scroll = Mouse.current.scroll.y.ReadValue();
+            if (scroll > 0) 
+            {
+                int nextSlot = state.handIndex - 1;
+                if (nextSlot < 1) nextSlot = restrict;
+                inventoryManager.SelectItem(nextSlot);
+            }
+            else if (scroll < 0) 
+            {
+                int nextSlot = state.handIndex + 1;
+                if (nextSlot > restrict) nextSlot = 1;
+                inventoryManager.SelectItem(nextSlot);
+            }
+        }
+    }
 }
