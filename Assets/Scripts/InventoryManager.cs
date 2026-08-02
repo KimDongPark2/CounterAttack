@@ -27,12 +27,27 @@ public class InventoryManager : MonoBehaviour
             itemSlots[index].Select();
         }
     }
-    public void AddItemUI(string itemName, int num, Sprite Image)
+    public void AddItemUI(string itemName, int slotIndex, Sprite icon, int price, GameObject prefab)
     {
-        if (num >= 0 && num < itemSlots.Length)
+        if (slotIndex >= 0 && slotIndex < itemSlots.Length)
         {
-            itemSlots[num].Setup(itemName, num, Image);
+            itemSlots[slotIndex].Setup(itemName, slotIndex, icon, price, prefab);
         }
+    }
+    public int FindEmptySlot()
+    {
+        for (int i = 0; i < itemSlots.Length; i++)
+        {
+            if (!itemSlots[i].isOccupied)
+                return i;
+        }
+        return -1;
+    }
+    public ItemSlot GetSlot(int slotIndex)
+    {
+        if (slotIndex >= 0 && slotIndex < itemSlots.Length)
+            return itemSlots[slotIndex];
+        return null;
     }
     public void ClearSlotUI(int slotIndex)
     {

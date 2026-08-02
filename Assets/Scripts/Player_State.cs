@@ -1,14 +1,5 @@
-using NUnit.Framework;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 
-[System.Serializable]
-public class InventoryItem
-{
-    public Item_info itemData;
-    public int amount;
-}
 public class Player_State : MonoBehaviour
 {
     [Header("Financial Information")]
@@ -24,47 +15,5 @@ public class Player_State : MonoBehaviour
     [Header("Player State")]
     public int inventoryRestrict = 5;
     public int handIndex;
-    public int curitemIndex = 0;
     public int inventoryCnt = 0;
-    public List<InventoryItem> inventoryList = new List<InventoryItem>();
-
-
-    public void AddItemToState(Item_info info)
-    {
-        foreach (InventoryItem item in inventoryList) 
-            if(item.itemData.Name == info.Name)
-            {
-                item.amount++;
-                inventoryCnt++;
-                return;
-            }
-        InventoryItem newItem = new InventoryItem();
-        newItem.itemData = info;
-        newItem.amount = 1;
-        inventoryCnt++;
-        inventoryList.Add(newItem);
-    }
-    public int CheckItemAmount(Item_info info)
-    {
-        foreach (InventoryItem item in inventoryList)
-            if (item.itemData.Name == info.Name)
-                return item.amount;
-        return 0;
-    }
-    public void RemoveItemAtSlot(int slotIndex)
-    {
-        int count = 0;
-        for (int i = 0; i < inventoryList.Count; i++)
-        {
-            count += inventoryList[i].amount;
-            if (slotIndex < count)
-            {
-                inventoryList[i].amount--;
-                inventoryCnt--;
-                if (inventoryList[i].amount <= 0)
-                    inventoryList.RemoveAt(i);
-                return;
-            }
-        }
-    }
 }

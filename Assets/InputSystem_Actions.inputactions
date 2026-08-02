@@ -86,6 +86,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "RotationR",
+                    "type": "Button",
+                    "id": "fe32b34d-8096-4c39-b18f-680f51e048eb",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RotationL",
+                    "type": "Button",
+                    "id": "746700c5-68b2-4b0d-9e3d-6aa8cd27e98f",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -224,11 +242,33 @@
                 {
                     "name": "",
                     "id": "c0c234d8-3703-443c-870b-ae6a58b7d573",
-                    "path": "<Keyboard>/q",
+                    "path": "<Keyboard>/g",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "throw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "046f698c-9a0c-4319-83c4-3b14c333f20a",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotationR",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d7203d01-6b6d-432b-bf0c-b9528ea74dd7",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotationL",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
