@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.InputSystem; // 신식 인풋 시스템 필수 네임스페이스
+using UnityEngine.InputSystem; 
 
 public class Player_movement : MonoBehaviour
 {

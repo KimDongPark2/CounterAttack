@@ -6,20 +6,24 @@ using UnityEngine.UIElements;
 
 public class Player_Interaction : MonoBehaviour
 {
-    private GameObject curTarget;
+    [Header("Components")]
     private Item_info curitemInfo;
-    [Header("Interaction Settings")]
-    private Player_State state;
-    public InventoryManager inventoryManager;
     public Player_ItemInstall itemInstall;
+    public InventoryManager inventoryManager;
+    private Player_State state;
+    public Player_Look look;
+    [Header("Interaction Settings")]
+    public GameObject UICanvas;
+    //public GameObject Crosshair;
+    //public GameObject Inventory;
+    //public GameObject NoticeMs;
+    public GameObject tablet;
+    private GameObject curTarget;
     public Camera playerCamera;
     public float interactRange = 10f;
     public int invenRt;
     [Header("UI")]
     public TextMeshProUGUI noticeText;
-
-    //YAS
-
     private void Start()
     {
         itemInstall = GetComponent<Player_ItemInstall>();
@@ -150,6 +154,21 @@ public class Player_Interaction : MonoBehaviour
                 if (nextSlot > restrict) nextSlot = 1;
                 inventoryManager.SelectItem(nextSlot);
             }
+        }
+    }
+
+    public void OnOpenTablet(InputValue value)
+    {
+        Debug.Log("Open Tablet");
+        if (value.isPressed)
+        {
+            bool state = tablet.activeSelf;
+            look.SetLookEnabled(state);
+            //Crosshair.SetActive(state);
+            //Inventory.SetActive(state);
+            //NoticeMs.SetActive(!state);
+            UICanvas.SetActive(state);
+            tablet.SetActive(!state);
         }
     }
 }
