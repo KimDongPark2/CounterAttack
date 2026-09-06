@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +14,8 @@ public class Tablet_interaction : MonoBehaviour
     private int selectedIndex = 0;
     public int OptionRestrict = 4;
     //public float mouseSensitivity = 15f;
+    [Header("Objects")]
+    public List<GameObject> ShoppingBags = new List<GameObject>();
     [Header("UI")]
     public TextMeshProUGUI CurMoney;
     public TextMeshProUGUI CurDebt;
@@ -28,7 +31,7 @@ public class Tablet_interaction : MonoBehaviour
     public TextMeshProUGUI state_totalsales;
     public TextMeshProUGUI state_process;
 
-
+    public TextMeshProUGUI LoanFieldText;
     private void Start()
     {
         Init();
@@ -65,10 +68,19 @@ public class Tablet_interaction : MonoBehaviour
         OptionScreen[index].SetActive(true);
         selectedIndex = index;
     }
-
-    public void OnLoans(int value)
+    public void OnLoans()
     {
-        state.money += value;
-        state.debt += value;
+        if (!int.TryParse(LoanFieldText.text, out int LoanAmount) || LoanAmount <= 0) return;
+        Debug.Log($"´ëÃâ : {LoanAmount}");
+        state.money += LoanAmount;
+        state.debt += LoanAmount;
+        LoanAmount = 0;
+        LoanFieldText.text = "";
+    }
+
+    public void AddOnBag(GameObject obj)
+    {
+        ShoppingBags.Add(obj);
+        Debug.Log($"{obj.name} Ãß°¡µÊ.");
     }
 }

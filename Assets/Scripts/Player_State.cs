@@ -22,7 +22,7 @@ public class Player_State : MonoBehaviour
     public void Init()
     {
         money = 500f;
-        debt = 1000f;
+        debt = 0;
 
         days = 1;
         countedCustomers = 0;
