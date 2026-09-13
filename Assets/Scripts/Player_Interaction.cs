@@ -7,16 +7,16 @@ using UnityEngine.UIElements;
 public class Player_Interaction : MonoBehaviour
 {
     [Header("Components")]
+    public Animator tabAnim;
     private Item_info curitemInfo;
     public Player_ItemInstall itemInstall;
     public InventoryManager inventoryManager;
     private Player_State state;
     public Player_Look look;
+
+    private bool TabActive = false;
     [Header("Interaction Settings")]
     public GameObject UICanvas;
-    //public GameObject Crosshair;
-    //public GameObject Inventory;
-    //public GameObject NoticeMs;
     public GameObject tablet;
     private GameObject curTarget;
     public Camera playerCamera;
@@ -80,8 +80,7 @@ public class Player_Interaction : MonoBehaviour
             int slotIndex = inventoryManager.FindEmptySlot();
             if (slotIndex < 0) return;
 
-            // 설치용 프리팹 결정: Item_info.Prefab이 없거나 씬 오브젝트 자체를 가리키면
-            // 현재 아이템을 복제해서 런타임 프리팹으로 사용
+
             GameObject prefabToStore = curitemInfo.Prefab;
             if (prefabToStore == null || prefabToStore == curTarget || prefabToStore.scene.IsValid())
             {
@@ -95,7 +94,6 @@ public class Player_Interaction : MonoBehaviour
             inventoryManager.AddItemUI(curitemInfo.Name, slotIndex, curitemInfo.iconImage, curitemInfo.Price, prefabToStore);
             state.inventoryCnt++;
 
-            // 손에 아무 슬롯도 선택되어 있지 않으면 주운 슬롯(1~5)을 자동 선택
             if (state.handIndex == 0)
             {
                 inventoryManager.SelectItem(slotIndex + 1);
@@ -159,16 +157,16 @@ public class Player_Interaction : MonoBehaviour
 
     public void OnOpenTablet(InputValue value)
     {
-        Debug.Log("Open Tablet");
-        if (value.isPressed)
-        {
-            bool state = tablet.activeSelf;
-            look.SetLookEnabled(state);
-            //Crosshair.SetActive(state);
-            //Inventory.SetActive(state);
-            //NoticeMs.SetActive(!state);
-            UICanvas.SetActive(state);
-            tablet.SetActive(!state);
-        }
+        if (!value.isPressed) return;
+
+        TabActive = !TabActive;
+
+        tabAnim.ResetTrigger("Open");
+        tabAnim.ResetTrigger("Close");
+        tabAnim.SetTrigger(TabActive ? "Open" : "Close");
+            
+        look.SetLookEnabled(!TabActive);
+        UICanvas.SetActive(!TabActive);
+
     }
 }

@@ -51,7 +51,6 @@ public class ShoppingBags : MonoBehaviour
         Debug.Log($"[장바구니] {item.Name} +{amount} (총 {TotalCount}개 / {TotalPrice}$)");
         OnCartChanged?.Invoke();
     }
-
     public void SetCount(Item_info item, int count)
     {
         var e = Find(item);

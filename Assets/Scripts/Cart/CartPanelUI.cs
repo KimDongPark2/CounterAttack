@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,14 +8,13 @@ public class CartPanelUI : MonoBehaviour
     [Header("Component")]
     public ShoppingBags cart;
     public Player_State state;
+    public DeliverySystem spawner;
 
     [Header("UI")]
-    public Transform contentRoot;       // ShoppingBag List/Viewport/Content
+    public Transform contentRoot;     
     public CartSlotUI slotPrefab;
     public TextMeshProUGUI totalText;
-    //public TextMeshProUGUI balanceText;
     public Button orderButton;
-    //public GameObject emptyText;        // "장바구니가 비었습니다" (선택)
 
     void Awake()
     {
@@ -45,8 +45,6 @@ public class CartPanelUI : MonoBehaviour
 
         int total = cart.TotalPrice;
         if (totalText) totalText.text = $"{total}$";
-        //if (balanceText) balanceText.text = $"잔액 : {state.money}$";
-        //if (emptyText) emptyText.SetActive(cart.items.Count == 0);
         if (orderButton) orderButton.interactable = total > 0 && state.money >= total;
     }
 
@@ -57,9 +55,11 @@ public class CartPanelUI : MonoBehaviour
 
         state.money -= total;
 
+        var order = new List<ShoppingBags.CartItem>();
         foreach (var e in cart.items)
-            Debug.Log($"[주문] {e.item.Name} x{e.count}");
+            order.Add(new ShoppingBags.CartItem { item = e.item, count = e.count });
 
+        spawner.Deliver(order);
         cart.Clear();
     }
 }

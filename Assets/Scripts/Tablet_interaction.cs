@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class Tablet_interaction : MonoBehaviour
 {
     [Header("Component")]
+    
     public Player_State state;
     public Player_Look look;
     public Player_movement move;
@@ -34,6 +35,7 @@ public class Tablet_interaction : MonoBehaviour
     public TextMeshProUGUI LoanFieldText;
     private void Start()
     {
+        //anim = GetComponent<Animator>();
         Init();
     }
     private void Update()
@@ -70,12 +72,13 @@ public class Tablet_interaction : MonoBehaviour
     }
     public void OnLoans()
     {
-        if (!int.TryParse(LoanFieldText.text, out int LoanAmount) || LoanAmount <= 0) return;
-        Debug.Log($"대출 : {LoanAmount}");
-        state.money += LoanAmount;
-        state.debt += LoanAmount;
-        LoanAmount = 0;
-        LoanFieldText.text = "";
+        state.money += 500;
+        //if (!int.TryParse(LoanFieldText.text, out int LoanAmount) || LoanAmount <= 0) return;
+        //Debug.Log($"대출 : {LoanAmount}");
+        //state.money += LoanAmount;
+        //state.debt += LoanAmount;
+        //LoanAmount = 0;
+        //LoanFieldText.text = "";
     }
 
     public void AddOnBag(GameObject obj)

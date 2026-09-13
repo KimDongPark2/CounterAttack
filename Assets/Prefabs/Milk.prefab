@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 2617323313883620458}
   - component: {fileID: 6049071119386380341}
   - component: {fileID: 880156826055431904}
-  - component: {fileID: 1508654446765648817}
   - component: {fileID: 6900992307643838142}
+  - component: {fileID: 7704789898392481406}
   m_Layer: 0
   m_Name: Milk
   m_TagString: Item
@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 22092538506667187}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 30.117685, y: 1.92988, z: -7.2468395}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -48,6 +48,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 162276e2edb35484ead1b551207b630a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Item_info
+  Type: 0
   Name: "\uC6B0\uC720"
   Price: 300
   iconImage: {fileID: 21300000, guid: 926bddf8a6e45bd4d85fb96107f1cfbd, type: 3}
@@ -109,28 +110,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &1508654446765648817
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 22092538506667187}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 3371799226304767270, guid: 21bd281347300ca4ba2a46bf7aedc61c, type: 3}
 --- !u!65 &6900992307643838142
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -152,3 +131,30 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.20552401, y: 0.47628948, z: 0.20841908}
   m_Center: {x: -0.0000036731362, y: 0.23814471, z: 0.0013241582}
+--- !u!54 &7704789898392481406
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 22092538506667187}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0

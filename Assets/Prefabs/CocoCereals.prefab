@@ -12,9 +12,8 @@ GameObject:
   - component: {fileID: 641844039410129275}
   - component: {fileID: 78470890829542354}
   - component: {fileID: 5761965364063871420}
-  - component: {fileID: 6505120824210798741}
-  - component: {fileID: 8646599792445786033}
   - component: {fileID: 8881045823149187069}
+  - component: {fileID: 6026181440568582356}
   m_Layer: 0
   m_Name: CocoCereals
   m_TagString: Item
@@ -31,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 1428675317620508155}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -1, z: -0, w: -0.000000044703484}
-  m_LocalPosition: {x: 44.7806, y: 1.92988, z: -9.732376}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -49,6 +48,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 162276e2edb35484ead1b551207b630a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Item_info
+  Type: 0
   Name: "\uCF54\uCF54\uC2DC\uB9AC\uC5BC"
   Price: 600
   iconImage: {fileID: 21300000, guid: fe7eaa06445aec148a99cc9cadd8f9b5, type: 3}
@@ -110,50 +110,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &6505120824210798741
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1428675317620508155}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6668762836556552141, guid: 21bd281347300ca4ba2a46bf7aedc61c, type: 3}
---- !u!64 &8646599792445786033
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1428675317620508155}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 6668762836556552141, guid: 21bd281347300ca4ba2a46bf7aedc61c, type: 3}
 --- !u!65 &8881045823149187069
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -175,3 +131,30 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.37234193, y: 0.47343314, z: 0.14693601}
   m_Center: {x: -0.0000038966537, y: 0.23620939, z: 0.0017617643}
+--- !u!54 &6026181440568582356
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1428675317620508155}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
