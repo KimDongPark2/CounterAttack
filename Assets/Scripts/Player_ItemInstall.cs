@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,6 +17,7 @@ public class Player_ItemInstall : MonoBehaviour
     private bool canInstall = false;
     private Vector3 installPosition;
     private Quaternion finalInstallRotation = Quaternion.identity;
+    private Transform currentSnapPoint;
 
     private Player_State state;
     private InventoryManager inventoryManager;
@@ -43,7 +45,7 @@ public class Player_ItemInstall : MonoBehaviour
                 {
                     Debug.Log("[ItemInstall] 설치 불가 위치이므로 설치 취소 및 미리보기 삭제");
                 }
-                
+
                 isHoldingF = false;
                 canInstall = false;
                 HidePreview();
@@ -188,6 +190,7 @@ public class Player_ItemInstall : MonoBehaviour
         }
 
         finalInstallRotation = Quaternion.Euler(0, currentRotationY, 0);
+        currentSnapPoint = null; // [수정] 매 프레임 스냅 정보 초기화 (이전 프레임 값이 남지 않게)
 
         // Raycast 시 Ignore Raycast 트리거 옵션 지정
         if (Physics.Raycast(ray, out hitInfo, installRange, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
@@ -218,6 +221,7 @@ public class Player_ItemInstall : MonoBehaviour
                 if (closestPos != null)
                 {
                     installPosition = closestPos.position;
+                    currentSnapPoint = closestPos;
                     if (snapRotation)
                     {
                         finalInstallRotation = closestPos.rotation * Quaternion.Euler(0, currentRotationY, 0);
@@ -381,6 +385,10 @@ public class Player_ItemInstall : MonoBehaviour
         installed.tag = "Item";
         installed.SetActive(true);
 
+        // [수정] 씬 전체에서 가까운 네임택을 찾는 대신,
+        // 아이템이 스냅된 Pos 안에 들어있는 네임택 글자를 바로 바꿈
+        UpdateNameTag(handSlot.currentItemName);
+
         Debug.Log(handSlot.currentItemName + " installed");
 
         int slotIndex = state.handIndex - 1;
@@ -388,5 +396,26 @@ public class Player_ItemInstall : MonoBehaviour
         state.inventoryCnt--;
 
         HidePreview();
+    }
+
+    private void UpdateNameTag(string itemName)
+    {
+        if (currentSnapPoint == null)
+        {
+            Debug.LogWarning("[ItemInstall] Pos에 스냅되지 않은 위치라서 네임택을 바꾸지 않았습니다.");
+            return;
+        }
+
+        // TMP_Text는 3D 텍스트(TextMeshPro)와 UI 텍스트(TextMeshProUGUI) 둘 다 찾아줌
+        TMP_Text nameText = currentSnapPoint.GetComponentInChildren<TMP_Text>(true);
+
+        if (nameText == null)
+        {
+            Debug.LogWarning($"[ItemInstall] {currentSnapPoint.name} 안에 TextMeshPro 텍스트가 없습니다.");
+            return;
+        }
+
+        nameText.text = itemName;
+        Debug.Log($"[ItemInstall] {currentSnapPoint.name}의 네임택을 '{itemName}'(으)로 변경");
     }
 }

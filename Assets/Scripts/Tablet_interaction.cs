@@ -23,8 +23,8 @@ public class Tablet_interaction : MonoBehaviour
 
     public Slider MouseSlider;
 
-    public TextMeshProUGUI state_money;
-    public TextMeshProUGUI state_debt;
+    //public TextMeshProUGUI state_money;
+    //public TextMeshProUGUI state_debt;
     public TextMeshProUGUI state_star;
     public TextMeshProUGUI state_Inven_cnt;
     public TextMeshProUGUI state_Move;
@@ -40,12 +40,12 @@ public class Tablet_interaction : MonoBehaviour
     }
     private void Update()
     {
-        CurMoney.text = $"µ·:{state.money.ToString()}$";
-        CurDebt.text = $"ºú:{state.debt.ToString()}$";
+        //CurMoney.text = $"µ·:{state.money.ToString()}$";
+        //CurDebt.text = $"ºú:{state.debt.ToString()}$";
         look.moveSensitivity = MouseSlider.value;
 
-        state_money.text = $"{state.money}$";
-        state_debt.text = $"{state.debt}$";
+        //state_money.text = $"{state.money}$";
+        //state_debt.text = $"{state.debt}$";
         state_star.text = $"{state.star}/5";
         state_Inven_cnt.text = $"{state.inventoryRestrict}/10";
         state_Move.text = $"{move.moveSpeed}/30";
