@@ -42,7 +42,7 @@ public class Tablet_interaction : MonoBehaviour
     {
         //CurMoney.text = $"µ·:{state.money.ToString()}$";
         //CurDebt.text = $"ºú:{state.debt.ToString()}$";
-        look.moveSensitivity = MouseSlider.value;
+        //look.moveSensitivity = MouseSlider.value;
 
         //state_money.text = $"{state.money}$";
         //state_debt.text = $"{state.debt}$";

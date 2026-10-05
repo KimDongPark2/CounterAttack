@@ -1,7 +1,7 @@
-using ConvenienceStore.Ordering;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
+// 장바구니. 담긴 물건(Item_info)과 개수를 들고 있고, 바뀌면 OnCartChanged로 알려준다.
 public class ShoppingBags : MonoBehaviour
 {
     [System.Serializable]
@@ -34,7 +34,7 @@ public class ShoppingBags : MonoBehaviour
         }
     }
 
-    CartItem Find(Item_info item)
+    private CartItem Find(Item_info item)
     {
         foreach (var e in items) if (e.item == item) return e;
         return null;
@@ -48,9 +48,9 @@ public class ShoppingBags : MonoBehaviour
         if (e != null) e.count += amount;
         else items.Add(new CartItem { item = item, count = amount });
 
-        Debug.Log($"[��ٱ���] {item.Name} +{amount} (�� {TotalCount}�� / {TotalPrice}$)");
         OnCartChanged?.Invoke();
     }
+
     public void SetCount(Item_info item, int count)
     {
         var e = Find(item);

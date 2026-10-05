@@ -1,323 +1,192 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+// 손에 든 물건을 선반에 설치
+// F키는 Player_Interaction이 받아서 BeginHold(누름) / EndHold(뗌)로 알려준다
+//   누르고 있는 동안: 바라보는 곳에 반투명 미리보기 (초록 = 설치 가능, 빨강 = 불가)
+//   떼면: 설치 가능하면 설치하고 네임택 이름 변경
 public class Player_ItemInstall : MonoBehaviour
 {
     [Header("Preview Settings")]
+    public Camera playerCamera;
     public float installRange = 10f;
     public float snapRadius = 0.5f;
     public bool snapRotation = true;
-    public Camera playerCamera;
 
-    [HideInInspector]
-    public GameObject prevObject;
-
-    public bool isHoldingF = false;
-    private bool canInstall = false;
-    private Vector3 installPosition;
-    private Quaternion finalInstallRotation = Quaternion.identity;
-    private Transform currentSnapPoint;
+    public bool IsHolding { get; private set; }
 
     private Player_State state;
-    private InventoryManager inventoryManager;
+    private InventoryManager inventory;
+
+    private GameObject preview;
+    private bool canInstall;
+    private Vector3 installPosition;
+    private Quaternion installRotation = Quaternion.identity;
+    private Transform snapPoint;
+    private float rotationY;
+
+    private Material installableMat;
+    private Material blockedMat;
+    private float lastWarnTime;
 
     private void Start()
     {
         state = GetComponent<Player_State>();
-        inventoryManager = InventoryManager.Instance;
-        Debug.Log("ItemInstall Ready");
+        inventory = InventoryManager.Instance;
+        if (playerCamera == null) playerCamera = Camera.main;
     }
 
     private void Update()
     {
-        if (isHoldingF)
-        {
-            // Input System의 release 이벤트가 누락되는 경우를 대비해 Update에서 강제 체크
-            if (Keyboard.current != null && !Keyboard.current.fKey.isPressed)
-            {
-                Debug.Log($"[ItemInstall] F키 뗌 감지 (Update) | 설치 가능 여부={canInstall}");
-                if (canInstall)
-                {
-                    InstallItem();
-                }
-                else
-                {
-                    Debug.Log("[ItemInstall] 설치 불가 위치이므로 설치 취소 및 미리보기 삭제");
-                }
+        if (!IsHolding) return;
 
-                isHoldingF = false;
-                canInstall = false;
-                HidePreview();
-            }
-            else if (HasItemInHand())
-            {
-                UpdatePreview();
-            }
-            else
-            {
-                isHoldingF = false;
-                HidePreview();
-            }
-        }
-        else if (prevObject != null)
+        if (HandSlot() == null)
         {
-            HidePreview();
+            CancelHold();
+            return;
         }
+        UpdatePreview();
     }
 
-    private float lastWarnTime = 0f;
-    private Material installableMat;
-    private Material notInstallableMat;
-    private float currentRotationY = 0f;
-
-    public void OnRotationL(InputValue value)
+    // ---------- Player_Interaction이 부르는 부분 ----------
+    public void BeginHold()
     {
-        if (value.isPressed && isHoldingF)
+        if (HandSlot() == null)
         {
-            currentRotationY -= 90f;
-            if (prevObject != null)
-                prevObject.transform.rotation = Quaternion.Euler(0, currentRotationY, 0);
+            Debug.Log("[ItemInstall] 손에 든 물건이 없습니다. 숫자키로 물건이 있는 슬롯을 고르세요.");
+            return;
         }
+        IsHolding = true;
+        rotationY = 0f;
     }
 
-    public void OnRotationR(InputValue value)
+    public void EndHold()
     {
-        if (value.isPressed && isHoldingF)
-        {
-            currentRotationY += 90f;
-            if (prevObject != null)
-                prevObject.transform.rotation = Quaternion.Euler(0, currentRotationY, 0);
-        }
+        if (!IsHolding) return;
+        if (canInstall) InstallItem();
+        CancelHold();
     }
 
-    public void OnInteract(InputValue value)
+    public void CancelHold()
     {
-        if (value.isPressed)
-        {
-            Player_Interaction interaction = GetComponent<Player_Interaction>();
-            if (interaction != null && interaction.CanPickUpItem())
-            {
-                Debug.Log("[ItemInstall] 아이템 줍기 우선 감지. 설치 준비 취소.");
-                return;
-            }
-
-            Debug.Log($"[ItemInstall] F키 눌림 감지 | handIndex={state?.handIndex} | HasItemInHand={HasItemInHand()}");
-            if (HasItemInHand())
-            {
-                ItemSlot handSlot = GetHandSlot();
-                if (handSlot.itemPrefab == null)
-                {
-                    Debug.LogWarning($"[ItemInstall] {state.handIndex}번 슬롯의 아이템({handSlot.currentItemName})에 Prefab이 설정되어 있지 않습니다!");
-                }
-                else
-                {
-                    isHoldingF = true;
-                    currentRotationY = 0f; // 새로 설치 모드 진입 시 회전 초기화
-                }
-            }
-            else
-            {
-                if (state == null || state.handIndex <= 0)
-                {
-                    Debug.LogWarning("[ItemInstall] 현재 선택된 인벤토리 슬롯이 없습니다. (숫자키 1~5를 눌러 슬롯을 선택하세요)");
-                }
-                else
-                {
-                    ItemSlot slot = GetHandSlot();
-                    if (slot == null || !slot.isOccupied)
-                    {
-                        Debug.LogWarning($"[ItemInstall] 현재 선택된 {state.handIndex}번 슬롯이 비어 있습니다.");
-                    }
-                }
-            }
-        }
-        else
-        {
-            // Input System에서 정상적으로 Release 이벤트를 보내주는 경우
-            if (isHoldingF)
-            {
-                Debug.Log($"[ItemInstall] F키 뗌 감지 (OnInteract) | 설치 가능 여부={canInstall}");
-                if (canInstall)
-                {
-                    InstallItem();
-                }
-                else
-                {
-                    Debug.Log("[ItemInstall] 설치 불가 위치이므로 설치 취소 및 미리보기 삭제");
-                }
-            }
-            isHoldingF = false;
-            canInstall = false;
-            HidePreview();
-        }
+        IsHolding = false;
+        canInstall = false;
+        HidePreview();
     }
 
-    private bool HasItemInHand()
+    // ---------- 회전 (Input Actions의 RotationL / RotationR) ----------
+    public void OnRotationL(InputValue value) { if (value.isPressed) Rotate(-90f); }
+    public void OnRotationR(InputValue value) { if (value.isPressed) Rotate(90f); }
+    private void Rotate(float degrees) { if (IsHolding) rotationY += degrees; }
+
+    // 손에 든 슬롯에 설치할 수 있는 물건이 있으면 그 슬롯, 없으면 null
+    private ItemSlot HandSlot()
     {
-        return state != null && state.handIndex > 0 && GetHandSlot() != null && GetHandSlot().isOccupied;
+        if (inventory == null) inventory = InventoryManager.Instance;
+        ItemSlot slot = inventory != null ? inventory.HandSlot : null;
+        return (slot != null && slot.isOccupied && slot.itemPrefab != null) ? slot : null;
     }
 
-    private ItemSlot GetHandSlot()
-    {
-        if (inventoryManager == null) inventoryManager = InventoryManager.Instance;
-        if (inventoryManager == null || state == null) return null;
-        return inventoryManager.GetSlot(state.handIndex - 1);
-    }
-
+    // ---------- 미리보기 ----------
     private void UpdatePreview()
     {
-        if (playerCamera == null) playerCamera = Camera.main;
-        if (playerCamera == null)
-        {
-            if (Time.time - lastWarnTime > 2f)
-            {
-                Debug.LogWarning("[ItemInstall] Player Camera가 연결되어 있지 않습니다!");
-                lastWarnTime = Time.time;
-            }
-            return;
-        }
-
+        ItemSlot slot = HandSlot();
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-        RaycastHit hitInfo;
 
-        ItemSlot handSlot = GetHandSlot();
-        if (handSlot == null || handSlot.itemPrefab == null)
+        canInstall = false;
+        snapPoint = null;
+        installRotation = Quaternion.Euler(0, rotationY, 0);
+        installPosition = ray.origin + ray.direction * installRange;
+
+        if (Physics.Raycast(ray, out RaycastHit hit, installRange, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
         {
-            canInstall = false;
-            HidePreview();
-            return;
-        }
+            installPosition = hit.point;
 
-        finalInstallRotation = Quaternion.Euler(0, currentRotationY, 0);
-        currentSnapPoint = null; // [수정] 매 프레임 스냅 정보 초기화 (이전 프레임 값이 남지 않게)
-
-        // Raycast 시 Ignore Raycast 트리거 옵션 지정
-        if (Physics.Raycast(ray, out hitInfo, installRange, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
-        {
-            installPosition = hitInfo.point;
-            if (hitInfo.collider.CompareTag("InstallAvailable"))
+            if (hit.collider.CompareTag("InstallAvailable"))
             {
                 canInstall = true;
-
-                // --- 스냅(Snap) 로직 ---
-                Transform hitTransform = hitInfo.collider.transform;
-                Transform closestPos = null;
-                float minDistance = snapRadius;
-
-                foreach (Transform child in hitTransform.GetComponentsInChildren<Transform>())
+                snapPoint = FindSnapPoint(hit.collider.transform, hit.point);
+                if (snapPoint != null)
                 {
-                    if (child.name.StartsWith("Pos"))
-                    {
-                        float dist = Vector3.Distance(hitInfo.point, child.position);
-                        if (dist < minDistance)
-                        {
-                            minDistance = dist;
-                            closestPos = child;
-                        }
-                    }
-                }
-
-                if (closestPos != null)
-                {
-                    installPosition = closestPos.position;
-                    currentSnapPoint = closestPos;
-                    if (snapRotation)
-                    {
-                        finalInstallRotation = closestPos.rotation * Quaternion.Euler(0, currentRotationY, 0);
-                    }
+                    installPosition = snapPoint.position;
+                    if (snapRotation) installRotation = snapPoint.rotation * installRotation;
                 }
             }
             else
             {
-                canInstall = false;
-                if (Time.time - lastWarnTime > 2f)
-                {
-                    Debug.LogWarning($"[ItemInstall] 감지된 오브젝트('{hitInfo.collider.name}')의 Tag가 '{hitInfo.collider.tag}'입니다. ('InstallAvailable' 태그 필요)");
-                    lastWarnTime = Time.time;
-                }
+                Warn($"'{hit.collider.name}'에는 설치할 수 없습니다. (InstallAvailable 태그 필요)");
             }
         }
-        else
+
+        if (preview == null)
         {
-            canInstall = false;
-            installPosition = ray.origin + ray.direction * installRange;
-            if (Time.time - lastWarnTime > 2f)
+            preview = Instantiate(slot.itemPrefab);
+            preview.SetActive(true);
+            MakePreviewOnly(preview);
+        }
+        preview.transform.SetPositionAndRotation(installPosition, installRotation);
+        PaintPreview(preview, canInstall);
+    }
+
+    // 맞은 오브젝트 안에서 이름이 Pos로 시작하는 자리 중 가장 가까운 곳
+    private Transform FindSnapPoint(Transform root, Vector3 point)
+    {
+        Transform best = null;
+        float bestDist = snapRadius;
+        foreach (Transform t in root.GetComponentsInChildren<Transform>())
+        {
+            if (!t.name.StartsWith("Pos")) continue;
+            float d = Vector3.Distance(point, t.position);
+            if (d < bestDist)
             {
-                Debug.LogWarning($"[ItemInstall] 사거리({installRange}m) 내에 바라보는 콜라이더(바닥/벽)가 없습니다.");
-                lastWarnTime = Time.time;
+                bestDist = d;
+                best = t;
             }
         }
-
-        if (prevObject == null)
-        {
-            Debug.Log($"[ItemInstall] 미리보기 생성 완료: {handSlot.itemPrefab.name} (위치: {installPosition})");
-            prevObject = Instantiate(handSlot.itemPrefab, installPosition, finalInstallRotation);
-            prevObject.SetActive(true);
-            SetPreviewMode(prevObject, canInstall);
-        }
-        else
-        {
-            prevObject.transform.position = installPosition;
-            prevObject.transform.rotation = finalInstallRotation;
-            prevObject.SetActive(true);
-            UpdatePreviewColor(prevObject, canInstall);
-        }
+        return best;
     }
 
-    private void SetPreviewMode(GameObject obj, bool isInstallable)
+    // 미리보기용 복사본은 레이에 안 걸리고, 안 부딪히고, 안 떨어지고, 스크립트도 안 돌게
+    private void MakePreviewOnly(GameObject obj)
     {
-        // 1. 레이캐스트 간섭을 방지하기 위해 Ignore Raycast 레이어로 변경
-        int ignoreRayLayer = LayerMask.NameToLayer("Ignore Raycast");
-        if (ignoreRayLayer != -1)
+        int ignoreLayer = LayerMask.NameToLayer("Ignore Raycast");
+        if (ignoreLayer != -1)
         {
-            SetLayerRecursively(obj, ignoreRayLayer);
+            foreach (Transform t in obj.GetComponentsInChildren<Transform>(true))
+                t.gameObject.layer = ignoreLayer;
         }
-
-        // 2. 모든 콜라이더 비활성화
-        foreach (Collider col in obj.GetComponentsInChildren<Collider>())
-            col.enabled = false;
-
-        // 3. 스크립트 비활성화/제거
-        foreach (MonoBehaviour mb in obj.GetComponentsInChildren<MonoBehaviour>())
-        {
-            if (mb != this && mb != null)
-                Destroy(mb);
-        }
-
-        UpdatePreviewColor(obj, isInstallable);
+        foreach (Collider col in obj.GetComponentsInChildren<Collider>()) col.enabled = false;
+        foreach (Rigidbody rb in obj.GetComponentsInChildren<Rigidbody>()) rb.isKinematic = true;
+        foreach (MonoBehaviour mb in obj.GetComponentsInChildren<MonoBehaviour>()) Destroy(mb);
     }
 
-    private void UpdatePreviewColor(GameObject obj, bool isInstallable)
+    private void PaintPreview(GameObject obj, bool installable)
     {
-        if (installableMat == null)
-            installableMat = CreateTransparentMaterial(new Color(0.2f, 0.8f, 0.2f, 0.45f));
-        if (notInstallableMat == null)
-            notInstallableMat = CreateTransparentMaterial(new Color(0.8f, 0.2f, 0.2f, 0.45f));
-
-        Material targetMat = isInstallable ? installableMat : notInstallableMat;
+        if (installableMat == null) installableMat = CreateTransparentMaterial(new Color(0.2f, 0.8f, 0.2f, 0.45f));
+        if (blockedMat == null) blockedMat = CreateTransparentMaterial(new Color(0.8f, 0.2f, 0.2f, 0.45f));
+        Material target = installable ? installableMat : blockedMat;
 
         foreach (Renderer rend in obj.GetComponentsInChildren<Renderer>())
         {
-            if (rend.sharedMaterials.Length > 0 && rend.sharedMaterials[0] == targetMat)
-                continue;
+            Material[] current = rend.sharedMaterials;
+            if (current.Length > 0 && current[0] == target) continue;
 
-            Material[] mats = new Material[rend.materials.Length];
-            for (int i = 0; i < mats.Length; i++)
-                mats[i] = targetMat;
+            Material[] mats = new Material[current.Length];
+            for (int i = 0; i < mats.Length; i++) mats[i] = target;
             rend.sharedMaterials = mats;
         }
     }
 
     private Material CreateTransparentMaterial(Color color)
     {
-        // URP 셰이더 먼저 시도, 없으면 Standard 사용
+        // URP 먼저, 없으면 기본(Standard) 셰이더
         Shader shader = Shader.Find("Universal Render Pipeline/Lit");
         if (shader != null)
         {
             Material mat = new Material(shader);
-            mat.SetFloat("_Surface", 1); // Transparent
-            mat.SetFloat("_Blend", 0);   // Alpha
+            mat.SetFloat("_Surface", 1);
+            mat.SetFloat("_Blend", 0);
             mat.SetFloat("_AlphaClip", 0);
             mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
@@ -329,93 +198,53 @@ public class Player_ItemInstall : MonoBehaviour
             return mat;
         }
 
-        // Built-in Standard 셰이더
-        shader = Shader.Find("Standard");
-        if (shader != null)
-        {
-            Material mat = new Material(shader);
-            mat.SetFloat("_Mode", 3); // Transparent
-            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            mat.SetInt("_ZWrite", 0);
-            mat.DisableKeyword("_ALPHATEST_ON");
-            mat.EnableKeyword("_ALPHABLEND_ON");
-            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-            mat.renderQueue = 3000;
-            mat.color = color;
-            return mat;
-        }
-
-        // 최후 대비: 기본 셰이더
-        Material fallback = new Material(Shader.Find("Sprites/Default"));
-        fallback.color = color;
-        return fallback;
-    }
-
-    private void SetLayerRecursively(GameObject obj, int newLayer)
-    {
-        if (obj == null) return;
-        obj.layer = newLayer;
-        foreach (Transform child in obj.transform)
-        {
-            if (child != null)
-                SetLayerRecursively(child.gameObject, newLayer);
-        }
+        Material standard = new Material(Shader.Find("Standard"));
+        standard.SetFloat("_Mode", 3);
+        standard.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        standard.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        standard.SetInt("_ZWrite", 0);
+        standard.DisableKeyword("_ALPHATEST_ON");
+        standard.EnableKeyword("_ALPHABLEND_ON");
+        standard.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        standard.renderQueue = 3000;
+        standard.color = color;
+        return standard;
     }
 
     private void HidePreview()
     {
-        if (prevObject != null)
-        {
-            // 에셋(Prefab Asset)이 아닌 씬 상의 오브젝트일 때만 안전하게 Destroy
-            if (prevObject.scene.IsValid())
-            {
-                Destroy(prevObject);
-            }
-            prevObject = null;
-        }
+        if (preview != null) Destroy(preview);
+        preview = null;
     }
 
+    // ---------- 설치 ----------
     private void InstallItem()
     {
-        ItemSlot handSlot = GetHandSlot();
-        if (handSlot == null || handSlot.itemPrefab == null) return;
+        ItemSlot slot = HandSlot();
+        if (slot == null) return;
 
-        GameObject installed = Instantiate(handSlot.itemPrefab, installPosition, finalInstallRotation);
+        GameObject installed = Instantiate(slot.itemPrefab, installPosition, installRotation);
         installed.tag = "Item";
         installed.SetActive(true);
 
-        // [수정] 씬 전체에서 가까운 네임택을 찾는 대신,
-        // 아이템이 스냅된 Pos 안에 들어있는 네임택 글자를 바로 바꿈
-        UpdateNameTag(handSlot.currentItemName);
-
-        Debug.Log(handSlot.currentItemName + " installed");
-
-        int slotIndex = state.handIndex - 1;
-        inventoryManager.ClearSlotUI(slotIndex);
-        state.inventoryCnt--;
-
-        HidePreview();
+        UpdateNameTag(slot.currentItemName);
+        inventory.ClearSlotUI(state.handIndex - 1);
     }
 
+    // 스냅된 Pos 안에 들어 있는 네임택 글자를 바꾼다
     private void UpdateNameTag(string itemName)
     {
-        if (currentSnapPoint == null)
-        {
-            Debug.LogWarning("[ItemInstall] Pos에 스냅되지 않은 위치라서 네임택을 바꾸지 않았습니다.");
-            return;
-        }
+        if (snapPoint == null) return;
 
-        // TMP_Text는 3D 텍스트(TextMeshPro)와 UI 텍스트(TextMeshProUGUI) 둘 다 찾아줌
-        TMP_Text nameText = currentSnapPoint.GetComponentInChildren<TMP_Text>(true);
+        TMP_Text nameText = snapPoint.GetComponentInChildren<TMP_Text>(true);
+        if (nameText != null) nameText.text = itemName;
+        else Debug.LogWarning($"[ItemInstall] {snapPoint.name} 안에 TextMeshPro 텍스트가 없습니다.");
+    }
 
-        if (nameText == null)
-        {
-            Debug.LogWarning($"[ItemInstall] {currentSnapPoint.name} 안에 TextMeshPro 텍스트가 없습니다.");
-            return;
-        }
-
-        nameText.text = itemName;
-        Debug.Log($"[ItemInstall] {currentSnapPoint.name}의 네임택을 '{itemName}'(으)로 변경");
+    private void Warn(string message)
+    {
+        if (Time.time - lastWarnTime < 2f) return;
+        lastWarnTime = Time.time;
+        Debug.LogWarning("[ItemInstall] " + message);
     }
 }

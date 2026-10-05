@@ -49,7 +49,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Item_info
   Type: 0
+  category: 0
   Name: "\uC6B0\uC720"
+  Description: "\uAC13 \uC9DC\uB0B8 \uC2E0\uC120\uD55C \uC6B0\uC720!"
   Price: 300
   iconImage: {fileID: 21300000, guid: 926bddf8a6e45bd4d85fb96107f1cfbd, type: 3}
   Prefab: {fileID: 22092538506667187}
