@@ -14,6 +14,16 @@ public class Player_ItemInstall : MonoBehaviour
     public float snapRadius = 0.5f;
     public bool snapRotation = true;
 
+    [Header("Rotation")]
+    [Tooltip("처음 미리보기 방향 보정값. 물건이 뒤돌아 있으면 180, 옆을 보고 있으면 90 또는 -90")]
+    public float rotationOffsetY = 180f;
+    [Tooltip("선반이 아닌 바닥에 놓을 때, 내가 바라보는 방향 기준으로 놓기 (90도 단위로 반듯하게)")]
+    public bool alignToView = true;
+
+    [Header("Install")]
+    [Tooltip("설치한 물건의 물리를 고정해서, 부딪혀도 밀리거나 떨어지지 않게")]
+    public bool freezeInstalled = true;
+
     public bool IsHolding { get; private set; }
 
     private Player_State state;
@@ -96,7 +106,10 @@ public class Player_ItemInstall : MonoBehaviour
 
         canInstall = false;
         snapPoint = null;
-        installRotation = Quaternion.Euler(0, rotationY, 0);
+
+        // 보정값 + Q/E로 돌린 만큼
+        Quaternion spin = Quaternion.Euler(0, rotationOffsetY + rotationY, 0);
+        installRotation = ViewRotation() * spin;
         installPosition = ray.origin + ray.direction * installRange;
 
         if (Physics.Raycast(ray, out RaycastHit hit, installRange, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
@@ -105,12 +118,25 @@ public class Player_ItemInstall : MonoBehaviour
 
             if (hit.collider.CompareTag("InstallAvailable"))
             {
-                canInstall = true;
-                snapPoint = FindSnapPoint(hit.collider.transform, hit.point);
-                if (snapPoint != null)
+                Transform nearest = FindSnapPoint(hit.collider.transform, hit.point, out bool hasSlots);
+
+                if (!hasSlots)
                 {
-                    installPosition = snapPoint.position;
-                    if (snapRotation) installRotation = snapPoint.rotation * installRotation;
+                    // 칸(Pos)이 없는 곳(바닥, 데크)은 자유롭게 놓기
+                    canInstall = true;
+                }
+                else if (nearest == null)
+                {
+                    // 선반인데 칸에서 벗어난 곳을 보고 있음 → 칸에만 놓을 수 있음
+                    canInstall = false;
+                }
+                else
+                {
+                    // 칸에 맞춰 미리보기를 보여주고, 이미 물건이 있으면 빨간색
+                    snapPoint = nearest;
+                    installPosition = nearest.position;
+                    if (snapRotation) installRotation = nearest.rotation * spin;
+                    canInstall = !PlacedItem.IsOccupied(nearest);
                 }
             }
             else
@@ -129,14 +155,25 @@ public class Player_ItemInstall : MonoBehaviour
         PaintPreview(preview, canInstall);
     }
 
-    // 맞은 오브젝트 안에서 이름이 Pos로 시작하는 자리 중 가장 가까운 곳
-    private Transform FindSnapPoint(Transform root, Vector3 point)
+    // 바닥에 놓을 때 기준 방향: 내가 보는 방향을 90도 단위로 맞춘 것
+    private Quaternion ViewRotation()
     {
+        if (!alignToView) return Quaternion.identity;
+        float yaw = Mathf.Round(playerCamera.transform.eulerAngles.y / 90f) * 90f;
+        return Quaternion.Euler(0, yaw, 0);
+    }
+
+    // 맞은 오브젝트 안에서 이름이 Pos로 시작하는 자리 중 가장 가까운 곳
+    // hasSlots: 그 오브젝트에 Pos가 하나라도 있는지 (= 칸이 있는 선반인지)
+    private Transform FindSnapPoint(Transform root, Vector3 point, out bool hasSlots)
+    {
+        hasSlots = false;
         Transform best = null;
         float bestDist = snapRadius;
         foreach (Transform t in root.GetComponentsInChildren<Transform>())
         {
             if (!t.name.StartsWith("Pos")) continue;
+            hasSlots = true;
             float d = Vector3.Distance(point, t.position);
             if (d < bestDist)
             {
@@ -227,18 +264,23 @@ public class Player_ItemInstall : MonoBehaviour
         installed.tag = "Item";
         installed.SetActive(true);
 
-        UpdateNameTag(slot.currentItemName);
+        // 물리 고정: 그 자리에 딱 붙어 있고, 콜라이더는 남아 있어서 다시 주울 수 있음
+        if (freezeInstalled)
+        {
+            foreach (Rigidbody rb in installed.GetComponentsInChildren<Rigidbody>())
+                rb.isKinematic = true;
+        }
+
+        // 선반 칸에 놓았으면: 칸을 사용 중으로 기록 + 이름표에 이름 쓰기
+        // (이 물건을 주워가면 PlacedItem이 알아서 칸을 비우고 이름표를 지움)
+        if (snapPoint != null)
+        {
+            PlacedItem placed = installed.GetComponent<PlacedItem>();
+            if (placed == null) placed = installed.AddComponent<PlacedItem>();
+            placed.Place(snapPoint, slot.currentItemName);
+        }
+
         inventory.ClearSlotUI(state.handIndex - 1);
-    }
-
-    // 스냅된 Pos 안에 들어 있는 네임택 글자를 바꾼다
-    private void UpdateNameTag(string itemName)
-    {
-        if (snapPoint == null) return;
-
-        TMP_Text nameText = snapPoint.GetComponentInChildren<TMP_Text>(true);
-        if (nameText != null) nameText.text = itemName;
-        else Debug.LogWarning($"[ItemInstall] {snapPoint.name} 안에 TextMeshPro 텍스트가 없습니다.");
     }
 
     private void Warn(string message)

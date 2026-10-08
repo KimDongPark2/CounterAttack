@@ -68,6 +68,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ChocolateBar Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 7173065458075834209, guid: 5a23a418d6f4fbe48b8554feb638df31, type: 3}
+      propertyPath: m_TagString
+      value: Item
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: -7985586449724258945, guid: 5a23a418d6f4fbe48b8554feb638df31, type: 3}
     m_RemovedGameObjects: []

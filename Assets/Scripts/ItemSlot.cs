@@ -16,9 +16,12 @@ public class ItemSlot : MonoBehaviour
     public TextMeshProUGUI numberText;
     public Image itemImage;
 
-    private Color defaultColor;
-    private Color selectedColor = new Color(1f, 0.839f, 0f, 0.28f); // #FFD600
-    
+    [Header("Selected")]
+    [Tooltip("손에 든 칸일 때 바꿔 끼울 배경 이미지")]
+    public Sprite selectedSprite;
+
+    private Sprite defaultBackground;   // 원래 배경 이미지 (선택 해제하면 이걸로 돌아감)
+
     private Sprite defaultSprite;
     private bool defaultImageEnabled;
 
@@ -27,7 +30,7 @@ public class ItemSlot : MonoBehaviour
         if (slotBackground == null)
             slotBackground = GetComponent<Image>();
         if (slotBackground != null)
-            defaultColor = slotBackground.color;
+            defaultBackground = slotBackground.sprite;
 
         if (itemImage != null)
         {
@@ -43,10 +46,11 @@ public class ItemSlot : MonoBehaviour
         itemPrice = price;
         itemPrefab = prefab;
         nameText.text = itemName;
-        numberText.text = (itemNum+1).ToString();
+        numberText.text = (itemNum + 1).ToString();
         itemImage.sprite = icon;
         itemImage.enabled = true;
     }
+
     public void Clear()
     {
         isOccupied = false;
@@ -54,23 +58,25 @@ public class ItemSlot : MonoBehaviour
         itemPrice = 0;
         itemPrefab = null;
         if (nameText != null) nameText.text = "";
-        
+
         // 단축키 번호(numberText)는 지우지 않습니다.
-        
+
         if (itemImage != null)
         {
             itemImage.sprite = defaultSprite;
             itemImage.enabled = defaultImageEnabled;
         }
     }
+
     public void Select()
     {
-        if (slotBackground != null)
-            slotBackground.color = selectedColor;
+        if (slotBackground != null && selectedSprite != null)
+            slotBackground.sprite = selectedSprite;
     }
+
     public void Deselect()
     {
         if (slotBackground != null)
-            slotBackground.color = defaultColor;
+            slotBackground.sprite = defaultBackground;
     }
 }

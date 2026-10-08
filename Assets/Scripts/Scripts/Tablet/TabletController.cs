@@ -53,8 +53,15 @@ namespace ConvenienceStore.Tablet
         [SerializeField] private GameObject[] hideWhileOpen;
 
         [Header("입력")]
+        [Tooltip("비워두면 부모나 씬에서 자동으로 찾음")]
+        [SerializeField] private PlayerInput playerInput;
+
+        [Tooltip("Input Actions에서 열고 닫기에 쓸 액션 이름 (여기 묶인 키는 전부 열기/닫기)")]
+        [SerializeField] private string toggleActionName = "OpenTablet";
+
+        [Tooltip("위 액션을 못 찾았을 때만 쓰는 예비 키")]
         [SerializeField]
-        private InputAction toggleAction = new InputAction(
+        private InputAction fallbackAction = new InputAction(
             name: "ToggleTablet",
             type: InputActionType.Button,
             binding: "<Keyboard>/tab");
@@ -72,20 +79,57 @@ namespace ConvenienceStore.Tablet
             if (screenCanvas != null) screenRaycaster = screenCanvas.GetComponent<GraphicRaycaster>();
         }
 
+        private InputAction boundAction;
+        private bool started;
+
+        // PlayerInput이 준비된 뒤에 연결해야 해서 Start에서 처음 연결
         private void OnEnable()
         {
-            toggleAction.performed += HandleToggle;
-            toggleAction.Enable();
+            if (started) BindInput();
         }
 
         private void OnDisable()
         {
-            toggleAction.performed -= HandleToggle;
-            toggleAction.Disable();
+            UnbindInput();
+        }
+
+        private void BindInput()
+        {
+            if (boundAction != null) return;
+
+            if (playerInput == null) playerInput = GetComponentInParent<PlayerInput>();
+            if (playerInput == null) playerInput = FindAnyObjectByType<PlayerInput>();
+
+            InputAction action = playerInput != null && playerInput.actions != null
+                ? playerInput.actions.FindAction(toggleActionName)
+                : null;
+
+            if (action != null)
+            {
+                boundAction = action;  // PlayerInput이 켜고 끄니까 Enable은 안 해도 됨
+            }
+            else
+            {
+                Debug.LogWarning($"[TabletController] '{toggleActionName}' 액션을 못 찾아서 예비 키(Tab)를 씁니다.", this);
+                boundAction = fallbackAction;
+                fallbackAction.Enable();
+            }
+            boundAction.performed += HandleToggle;
+        }
+
+        private void UnbindInput()
+        {
+            if (boundAction == null) return;
+            boundAction.performed -= HandleToggle;
+            if (boundAction == fallbackAction) fallbackAction.Disable();
+            boundAction = null;
         }
 
         private void Start()
         {
+            started = true;
+            BindInput();
+
             if (tabletAnimator == null && tabletRoot != null && hiddenPoint != null)
             {
                 tabletRoot.localPosition = hiddenPoint.localPosition;
@@ -93,7 +137,6 @@ namespace ConvenienceStore.Tablet
             }
             SetScreenActive(false);
             IsOpen = false;
-
         }
 
         private void HandleToggle(InputAction.CallbackContext ctx) => Toggle();

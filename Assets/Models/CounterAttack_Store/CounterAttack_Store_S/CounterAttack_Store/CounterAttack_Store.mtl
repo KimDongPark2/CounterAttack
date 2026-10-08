@@ -1,0 +1,80 @@
+newmtl Wall
+Kd 0.9333 0.9451 0.9569
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Base
+Kd 0.3569 0.4196 0.4902
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Frame
+Kd 0.2275 0.2627 0.3137
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Glass
+Kd 0.6235 0.8275 0.9412
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 0.35
+
+newmtl Trim
+Kd 0.8667 0.8863 0.9098
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Fascia
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Brand
+Kd 0.0824 0.3333 0.7373
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Accent
+Kd 0.8314 0.1412 0.1882
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Ceiling
+Kd 0.9686 0.9725 0.9804
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Roof
+Kd 0.5412 0.5765 0.6196
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl CanopyUnder
+Kd 0.9490 0.9569 0.9686
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Floor
+Kd 0.9137 0.9020 0.8824
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+map_Kd floor_tile.png
+
+newmtl Deck
+Kd 0.7176 0.7373 0.7686
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+map_Kd deck_paver.png
+

@@ -321,6 +321,17 @@
                 },
                 {
                     "name": "",
+                    "id": "05ef3c92-43b6-4495-b6ae-dcccf7035140",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "OpenTablet",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "0f247ced-e947-4713-a33c-790151b46b87",
                     "path": "<Keyboard>/c",
                     "interactions": "",

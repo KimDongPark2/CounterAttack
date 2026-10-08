@@ -25,14 +25,14 @@ public class Tablet_interaction : MonoBehaviour
 
     //public TextMeshProUGUI state_money;
     //public TextMeshProUGUI state_debt;
-    public TextMeshProUGUI state_star;
-    public TextMeshProUGUI state_Inven_cnt;
-    public TextMeshProUGUI state_Move;
-    public TextMeshProUGUI state_days;
-    public TextMeshProUGUI state_totalsales;
-    public TextMeshProUGUI state_process;
+    //public TextMeshProUGUI state_star;
+    //public TextMeshProUGUI state_Inven_cnt;
+    //public TextMeshProUGUI state_Move;
+    //public TextMeshProUGUI state_days;
+    //public TextMeshProUGUI state_totalsales;
+    //public TextMeshProUGUI state_process;
 
-    public TextMeshProUGUI LoanFieldText;
+    //public TextMeshProUGUI LoanFieldText;
     private void Start()
     {
         //anim = GetComponent<Animator>();
@@ -46,12 +46,12 @@ public class Tablet_interaction : MonoBehaviour
 
         //state_money.text = $"{state.money}$";
         //state_debt.text = $"{state.debt}$";
-        state_star.text = $"{state.star}/5";
-        state_Inven_cnt.text = $"{state.inventoryRestrict}/10";
-        state_Move.text = $"{move.moveSpeed}/30";
-        state_days.text = $"{state.days}일";
-        state_totalsales.text = $"{state.totalSales}$";
-        state_process.text = $"만족 {state.goodProcess}개 | 불만족 {state.badProcess}개";
+        //state_star.text = $"{state.star}/5";
+        //state_Inven_cnt.text = $"{state.inventoryRestrict}/10";
+        //state_Move.text = $"{move.moveSpeed}/30";
+        //state_days.text = $"{state.days}일";
+        //state_totalsales.text = $"{state.totalSales}$";
+        //state_process.text = $"만족 {state.goodProcess}개 | 불만족 {state.badProcess}개";
     }
     private void Init()
     {
