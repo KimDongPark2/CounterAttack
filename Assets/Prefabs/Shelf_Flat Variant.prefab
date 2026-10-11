@@ -7974,9 +7974,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4710277016660893692, guid: 68e9c96cedb82e547879362d04050ce9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5352999693185410694}
-    - targetCorrespondingSourceObject: {fileID: 4710277016660893692, guid: 68e9c96cedb82e547879362d04050ce9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5712798866935192293}
   m_SourcePrefab: {fileID: 100100000, guid: 68e9c96cedb82e547879362d04050ce9, type: 3}
 --- !u!1 &937732887711952847 stripped
 GameObject:
@@ -8031,25 +8028,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.4569019, y: 1.8464093, z: 0.19}
   m_Center: {x: -0.00000026822087, y: 0.92320454, z: -0.0000011324883}
---- !u!114 &5712798866935192293
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 937732887711952847}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 162276e2edb35484ead1b551207b630a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Item_info
-  Type: 0
-  Name: "\uD310\uB9E4\uB300"
-  Description: "\uBB3C\uAC74\uC744 \uBC30\uCE58\uD558\uC5EC \uD310\uB9E4\uD560 \uC218
-    \uC788\uB2E4"
-  Price: 1000
-  iconImage: {fileID: 21300000, guid: e87b14d879d4c4144a2f2724a909c350, type: 3}
-  Prefab: {fileID: 937732887711952847}
 --- !u!4 &7465559076738510594 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3154703950468800305, guid: 68e9c96cedb82e547879362d04050ce9, type: 3}

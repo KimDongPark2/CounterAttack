@@ -1,0 +1,120 @@
+newmtl Base
+Kd 0.3569 0.4196 0.4902
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Fascia
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Trim
+Kd 0.8667 0.8863 0.9098
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Brand
+Kd 0.0824 0.3333 0.7373
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Accent
+Kd 0.8314 0.1412 0.1882
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl CounterTop
+Kd 0.8510 0.7098 0.5490
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Frame
+Kd 0.2275 0.2627 0.3137
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Metal
+Kd 0.6627 0.6941 0.7333
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl ProdOrange
+Kd 0.9490 0.5412 0.1804
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl ProdYellow
+Kd 0.9608 0.7529 0.1804
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl ProdBlue
+Kd 0.2314 0.4980 0.8784
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl ProdRed
+Kd 0.8863 0.2824 0.2392
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl ProdPink
+Kd 0.9333 0.4980 0.6902
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Plastic
+Kd 0.1686 0.1882 0.2196
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Screen
+Kd 0.1176 0.3059 0.5490
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl PlasticLight
+Kd 0.8275 0.8471 0.8745
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl ProdWhite
+Kd 0.9569 0.9569 0.9412
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl Wall
+Kd 0.9333 0.9451 0.9569
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl ProdPurple
+Kd 0.5412 0.3608 0.8392
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+
+newmtl ProdGreen
+Kd 0.2078 0.6510 0.4196
+Ka 0 0 0
+Ks 0.05 0.05 0.05
+d 1.0
+

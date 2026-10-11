@@ -13,7 +13,7 @@ Store_Assembled_24x16.obj  바로 쓰는 완성본 (가게 24m x 16m + 바깥 �
   Fascia         앞쪽 간판 띠 (폭 4m)
   Roof           지붕 + 천장 (4m x 4m)
   Floor          가게 바닥 (4m x 4m)
-  Canopy         입구 차양 (폭 4m, 앞으로 3m)
+  Canopy         입구 차양 (폭 4m, 앞으로 3m)	
   Deck           차양 아래 바깥 바닥 (4m x 3m)
 
 CounterAttack_Store.mtl, floor_tile.png, deck_paver.png  재질과 텍스처 (OBJ와 같은 폴더에 둘 것)

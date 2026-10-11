@@ -10,6 +10,8 @@ using ConvenienceStore.Tablet;
 public class Player_Interaction : MonoBehaviour
 {
     [Header("Components")]
+    public GameObject Scanner;
+    public GameObject handGun;
     public Camera playerCamera;
     public InventoryManager inventoryManager;
     public Player_ItemInstall itemInstall;
@@ -236,5 +238,23 @@ public class Player_Interaction : MonoBehaviour
         if (noticeText == null) return;
         noticeText.text = message;
         noticeText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+    }
+
+    public void OnScan(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            Animator scanAnim = Scanner.GetComponent<Animator>();
+            scanAnim.SetTrigger("Scan");
+        }
+    }
+
+    public void OnShoot(InputValue value)
+    {
+        if (value.isPressed)
+        {
+            Animator gunAnim = handGun.GetComponent<Animator>();
+            gunAnim.SetTrigger("Fire");
+        }
     }
 }
