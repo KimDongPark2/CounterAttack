@@ -61,8 +61,8 @@ public class SimpleShoot : MonoBehaviour
             Destroy(fx, destroyTimer);
         }
 
-        // 나중에 손님 스크립트에 OnShot() 함수를 만들면 맞았을 때 자동으로 불림 (없으면 무시)
-        hit.collider.SendMessageUpwards("OnShot", SendMessageOptions.DontRequireReceiver);
+        // 손님 스크립트의 OnShot(RaycastHit)이 불림 (맞은 위치로 쓰러지는 방향을 정함)
+        hit.collider.SendMessageUpwards("OnShot", hit, SendMessageOptions.DontRequireReceiver);
     }
 
     // 맞은 콜라이더나 그 부모 중에 Customer 태그가 있으면 사람

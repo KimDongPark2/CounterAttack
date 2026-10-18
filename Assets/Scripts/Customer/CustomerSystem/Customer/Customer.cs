@@ -25,17 +25,31 @@ public class Customer : MonoBehaviour
     [Tooltip("선반 칸에서 이 거리 안의 바닥(NavMesh)까지 걸어가서 집음")]
     public float itemReachRadius = 3f;
 
-    [Header("총 맞았을 때 날아가기")]
-    public float flyForce = 8f;
-    public float flyUp = 5f;
-    public float removeDelay = 2.5f;
+    [Header("애니메이션 (Animator 파라미터 이름. 컨트롤러는 그대로 씀)")]
+    [Tooltip("걸을 때 켜는 Bool")] public string walkBool = "Walk 1";
+    [Tooltip("뛸 때 켜는 Bool (도둑, 화나서 나갈 때)")] public string runBool = "Run 1";
+    [Tooltip("결제 후 인사할 때 켜는 Bool")] public string greetBool = "Greet";
+
+    [Header("총 맞았을 때 (래그돌)")]
+    [Tooltip("맞은 쪽으로 날아가는 힘 (몸 전체)")]
+    public float shotForce = 6f;
+    [Tooltip("위로 띄우는 힘")]
+    public float shotUp = 3f;
+    [Tooltip("맞은 부위에 추가로 주는 힘 (거기가 더 휙 꺾임)")]
+    public float hitPartForce = 4f;
+    [Tooltip("쓰러진 뒤 사라지기까지 시간(초)")]
+    public float removeDelay = 5f;
+    [Tooltip("래그돌이 없는 모델일 때만: 통째로 넘어지는 힘")]
+    public float fallbackPush = 3f;
 
     public CustomerType Type { get; private set; }
     public float PatienceRatio => maxPatience > 0 ? Mathf.Clamp01(patience / maxPatience) : 1f;
 
     private NavMeshAgent agent;
     private Animator anim;
-    private bool hasSpeedParam, hasGreetParam;
+    private Rigidbody[] ragdollBodies;   // 뼈에 붙은 Rigidbody들 (Ragdoll Wizard로 만든 것)
+    private Collider rootCollider;       // 손님 몸통 캡슐
+    private readonly HashSet<string> animParams = new HashSet<string>();
 
     private CustomerSpawner spawner;
     private CheckoutCounter counter;
@@ -48,6 +62,7 @@ public class Customer : MonoBehaviour
     private float actionTimer;
 
     private float patience, maxPatience, waitTime;
+    private bool initialized;   // CustomerSpawner가 Setup을 불렀는지
     private Vector3 faceDir;
 
     private void Awake()
@@ -55,14 +70,15 @@ public class Customer : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         anim = GetComponentInChildren<Animator>();
         if (anim != null)
-        {
-            anim.applyRootMotion = false; // 이동은 NavMeshAgent가 함
-            foreach (AnimatorControllerParameter p in anim.parameters)
-            {
-                if (p.name == "Speed" && p.type == AnimatorControllerParameterType.Float) hasSpeedParam = true;
-                if (p.name == "Greet" && p.type == AnimatorControllerParameterType.Trigger) hasGreetParam = true;
-            }
-        }
+            foreach (AnimatorControllerParameter p in anim.parameters) animParams.Add(p.name);
+
+        // 래그돌: 살아 있는 동안은 뼈 물리를 꺼둠 (애니메이션이 움직이게)
+        rootCollider = GetComponent<Collider>();
+        List<Rigidbody> bones = new List<Rigidbody>();
+        foreach (Rigidbody rb in GetComponentsInChildren<Rigidbody>(true))
+            if (rb.gameObject != gameObject) bones.Add(rb);
+        ragdollBodies = bones.ToArray();
+        SetRagdoll(false);
         Active.Add(this);
     }
 
@@ -71,6 +87,7 @@ public class Customer : MonoBehaviour
         spawner = s;
         counter = c;
         Type = type;
+        initialized = true;
 
         agent.speed = type == CustomerType.Hurry ? s.hurrySpeed : s.walkSpeed;
         maxPatience = patience = type == CustomerType.Hurry ? s.hurryPatience : s.normalPatience;
@@ -95,25 +112,37 @@ public class Customer : MonoBehaviour
         GoToNextItem();
     }
 
+    private void Start()
+    {
+        // 씬에 직접 놓아둔 손님은 Setup을 거치지 않아서 움직이지 않음
+        if (!initialized)
+        {
+            Debug.LogWarning($"[Customer] '{name}'은(는) CustomerSpawner가 만든 손님이 아니라서 움직이지 않습니다. " +
+                             "씬에 놓아둔 손님은 지우고, 프리팹은 CustomerSpawner에만 넣어주세요.", this);
+            enabled = false;
+        }
+    }
+
     private void Update()
     {
-        if (state == State.Gone) return;
-
-        if (hasSpeedParam)
-            anim.SetFloat("Speed", agent.enabled ? agent.velocity.magnitude : 0f);
+        if (!initialized || state == State.Gone) return;
 
         switch (state)
         {
             case State.Shopping: UpdateShopping(); break;
 
             case State.Queue:
-                UpdatePatience(1f);
-                if (state == State.Queue && counter.IsFront(this) && Arrived() && counter.ReadyForCheckout(this))
+                // 줄 서서 계산대로 가는 동안은 인내심이 안 닳음
+                if (counter.IsFront(this) && Arrived())
+                {
                     state = State.Checkout;
+                    if (!counter.ReadyForCheckout(this)) state = State.Queue;
+                }
                 break;
 
             case State.Checkout:
-                UpdatePatience(0.5f); // 계산 중에는 인내심이 천천히 닳음
+                // 계산대 위에 물건이 올라오기 시작하면 인내심이 닳기 시작
+                if (counter.HasItemsOut) UpdatePatience(1f);
                 break;
 
             case State.Paying:
@@ -127,6 +156,28 @@ public class Customer : MonoBehaviour
         }
 
         if (state != State.Gone && Arrived()) FaceTarget();
+        UpdateAnimation();
+    }
+
+    // ---------- 애니메이션 (Bool 켜고 끄기만 함) ----------
+    // 움직이면 Walk 1 (뛰는 속도면 Run 1), 서 있으면 전부 끔 = Idle, 결제 후엔 Greet
+    private void UpdateAnimation()
+    {
+        if (anim == null || state == State.Gone) return;
+
+        float v = agent.enabled ? agent.velocity.magnitude : 0f;
+        bool moving = v > agent.speed * 0.1f;
+        bool running = moving && agent.speed >= spawner.runSpeed - 0.01f;
+        bool greeting = state == State.Paying && !moving;
+
+        SetAnimBool(walkBool, moving && !running);
+        SetAnimBool(runBool, running);
+        SetAnimBool(greetBool, greeting);
+    }
+
+    private void SetAnimBool(string param, bool value)
+    {
+        if (!string.IsNullOrEmpty(param) && animParams.Contains(param)) anim.SetBool(param, value);
     }
 
     // ---------- 쇼핑 ----------
@@ -156,7 +207,13 @@ public class Customer : MonoBehaviour
 
     private void UpdateShopping()
     {
-        if (shopIndex < shoppingList.Count && shoppingList[shopIndex] == null)
+        if (shopIndex >= shoppingList.Count)
+        {
+            FinishShopping();
+            return;
+        }
+
+        if (shoppingList[shopIndex] == null)
         {
             Complain();
             shopIndex++;
@@ -264,8 +321,7 @@ public class Customer : MonoBehaviour
         walking = false;
 
         state = State.Paying;
-        actionTimer = hasGreetParam ? spawner.greetTime : 0.2f;
-        if (hasGreetParam) anim.SetTrigger("Greet");
+        actionTimer = spawner.greetTime; // 결제 후 잠깐 멈췄다가 나감
     }
 
     // ---------- 퇴장 ----------
@@ -288,7 +344,7 @@ public class Customer : MonoBehaviour
     }
 
     // ---------- 총 맞음 (SimpleShoot가 SendMessageUpwards로 부름) ----------
-    public void OnShot()
+    public void OnShot(RaycastHit hit)
     {
         if (state == State.Gone) return;
 
@@ -306,23 +362,61 @@ public class Customer : MonoBehaviour
         state = State.Gone;
         Active.Remove(this);
         if (angryMark != null) angryMark.SetActive(false);
-
         if (agent != null) agent.enabled = false;
-        if (anim != null) anim.enabled = false;
 
-        Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
-        rb.isKinematic = false;
-        rb.useGravity = true;
-
+        // 총 쏜 방향 (수평)
         Vector3 from = Camera.main != null ? Camera.main.transform.position : transform.position - transform.forward;
-        Vector3 dir = transform.position - from;
+        Vector3 dir = hit.point - from;
         dir.y = 0f;
         dir = dir.sqrMagnitude > 0.0001f ? dir.normalized : -transform.forward;
-        rb.AddForce(dir * flyForce + Vector3.up * flyUp, ForceMode.VelocityChange);
-        rb.AddTorque(Random.insideUnitSphere * 8f, ForceMode.VelocityChange);
+
+        if (ragdollBodies.Length > 0)
+        {
+            // 힘 풀리면서 쓰러지기: 애니메이션 끄고 뼈 물리 켜기
+            if (anim != null) anim.enabled = false;
+            if (rootCollider != null) rootCollider.enabled = false;
+            SetRagdoll(true);
+
+            // 몸 전체를 맞은 방향으로 날리고, 맞은 부위는 더 세게 (흐물거리며 날아감)
+            Vector3 launch = dir * shotForce + Vector3.up * shotUp;
+            Rigidbody nearest = ragdollBodies[0];
+            float best = float.MaxValue;
+            foreach (Rigidbody rb in ragdollBodies)
+            {
+                rb.AddForce(launch, ForceMode.VelocityChange);
+                float d = (rb.worldCenterOfMass - hit.point).sqrMagnitude;
+                if (d < best) { best = d; nearest = rb; }
+            }
+            nearest.AddForce(dir * hitPartForce, ForceMode.VelocityChange);
+        }
+        else
+        {
+            Debug.LogWarning($"[Customer] '{name}'에 래그돌이 없어서 통째로 넘어집니다. 손님 프리팹에 Ragdoll을 만들어주세요.", this);
+            // 래그돌이 없는 모델: 몸 전체가 맞은 방향으로 넘어짐
+            if (anim != null) anim.enabled = false;
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = false;
+            rb.useGravity = true;
+            rb.AddForceAtPosition(dir * fallbackPush, hit.point, ForceMode.VelocityChange);
+        }
 
         Destroy(gameObject, removeDelay);
+    }
+
+    // 뼈 물리 켜기/끄기
+    private void SetRagdoll(bool on)
+    {
+        foreach (Rigidbody rb in ragdollBodies)
+        {
+            rb.isKinematic = !on;
+            rb.useGravity = on;
+            if (on)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+        }
     }
 
     // 들고 있던 물건을 F키로 주울 수 있는 물건으로 바닥에 떨어뜨림

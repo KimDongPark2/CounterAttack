@@ -20,7 +20,9 @@ public class Player_State : MonoBehaviour
 
     [Header("Player State")]
     public int inventoryRestrict = 5;  // 쓸 수 있는 핫바 칸 수
-    public int handIndex;              // 지금 손에 든 슬롯 번호 (1부터, 0이면 없음)
+    public int handIndex;              // 지금 손에 든 슬롯 번호 (1부터, 0이면 없음, 6이면 권총)
+    public bool hasGun = false;        // 상점에서 권총을 샀는지 (사면 핫바 6번 칸이 생김)
+    public bool inCounter = false;     // 지금 계산대 안에 있는지 (Scanner가 매 프레임 갱신)
 
     // 돈이 바뀔 때마다 알려줌 (UI 갱신용)
     public event Action OnMoneyChanged;
@@ -36,6 +38,7 @@ public class Player_State : MonoBehaviour
         badProcess = 0;
 
         inventoryRestrict = 5;
+        hasGun = false;
         OnMoneyChanged?.Invoke();
     }
 
