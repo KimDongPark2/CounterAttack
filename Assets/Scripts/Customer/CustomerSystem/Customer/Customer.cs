@@ -420,25 +420,57 @@ public class Customer : MonoBehaviour
     }
 
     // 들고 있던 물건을 F키로 주울 수 있는 물건으로 바닥에 떨어뜨림
+    // - 손님이 있던 자리에서 그대로 아래로 떨어짐
+    // - 손님 몸(래그돌 뼈 포함)과는 안 부딪히게 해서, 총 맞고 날아가는 몸에 같이 튕겨 나가지 않음
     private void DropCarried()
     {
+        if (carried.Count == 0) return;
+
         Collider body = GetComponentInChildren<Collider>();
         Vector3 center = body != null ? body.bounds.center : transform.position + Vector3.up;
 
+        // 1) 먼저 물건을 손님한테서 떼어내고 켜기 (그래야 아래에서 손님 콜라이더만 모을 수 있음)
+        List<GameObject> drops = new List<GameObject>();
         foreach (GameObject obj in carried)
         {
             if (obj == null) continue;
             obj.transform.SetParent(null, true);
-            obj.transform.position = center + transform.forward * 0.5f + Random.insideUnitSphere * 0.2f;
             obj.SetActive(true);
+            drops.Add(obj);
+        }
+        carried.Clear();
+
+        // 2) 손님 몸 콜라이더 (켜져 있는 것만)
+        List<Collider> mine = new List<Collider>();
+        foreach (Collider c in GetComponentsInChildren<Collider>())
+            if (c.enabled && c.gameObject.activeInHierarchy) mine.Add(c);
+
+        // 3) 여러 개면 서로 안 겹치게 동그랗게 살짝 벌려 놓기 (물건 크기 기준)
+        float size = 0f;
+        foreach (GameObject obj in drops)
+            foreach (Renderer r in obj.GetComponentsInChildren<Renderer>())
+                size = Mathf.Max(size, Mathf.Max(r.bounds.extents.x, r.bounds.extents.z));
+        float radius = drops.Count > 1 ? size * 1.3f : 0f;
+
+        for (int i = 0; i < drops.Count; i++)
+        {
+            GameObject obj = drops[i];
+            Vector3 offset = Quaternion.Euler(0f, 360f * i / drops.Count, 0f) * Vector3.forward * radius;
+            obj.transform.position = center + offset;
             obj.tag = "Item";
 
             foreach (MeshCollider mc in obj.GetComponentsInChildren<MeshCollider>()) mc.convex = true;
             Rigidbody rb = obj.GetComponent<Rigidbody>();
             if (rb == null) rb = obj.AddComponent<Rigidbody>();
             rb.isKinematic = false;
+            rb.useGravity = true;
+            rb.linearVelocity = Vector3.zero;     // 그 자리에서 뚝 떨어지게
+            rb.angularVelocity = Vector3.zero;
+
+            foreach (Collider ic in obj.GetComponentsInChildren<Collider>())
+                foreach (Collider mc in mine)
+                    Physics.IgnoreCollision(ic, mc, true);
         }
-        carried.Clear();
     }
 
     private void ReleaseReservations()

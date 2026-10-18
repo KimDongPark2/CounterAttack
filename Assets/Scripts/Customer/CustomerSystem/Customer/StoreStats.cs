@@ -33,19 +33,52 @@ public static class StoreStats
         OnChanged?.Invoke();
     }
 
-    // 손님 1명당 평균 점수로 별 1~5개
+    // ---------- 점수 체계 ----------
+    // 응대 점수 합계 ÷ 손님 수 = 1명당 점수 → 별 1~5개
+    // 최종 점수(순위표) = 오늘 매출 × 별 배율 − 남은 빚
+
+    // 별을 나누는 기준 (1명당 점수가 이 값 이상이면 그 별)  ★2, ★3, ★4, ★5
+    public static readonly float[] StarCuts = { -1f, 0f, 0.8f, 1.5f };
+    // 별 배율  ★1, ★2, ★3, ★4, ★5
+    public static readonly float[] StarMultipliers = { 0.5f, 0.8f, 1.0f, 1.3f, 1.6f };
+
+    // 손님 1명당 점수 (손님이 없으면 0)
+    public static float AveragePoint => Visitors == 0 ? 0f : (float)Satisfaction / Visitors;
+
+    // 별 1~5개 (손님이 없으면 3개)
     public static int Stars
     {
         get
         {
             if (Visitors == 0) return 3;
-            float avg = (float)Satisfaction / Visitors;
-            if (avg >= 1.5f) return 5;
-            if (avg >= 0.8f) return 4;
-            if (avg >= 0f) return 3;
-            if (avg >= -1f) return 2;
-            return 1;
+            float avg = AveragePoint;
+            int stars = 1;
+            for (int i = 0; i < StarCuts.Length; i++)
+                if (avg >= StarCuts[i]) stars = i + 2;
+            return stars;
         }
+    }
+
+    // 지금 별의 배율 (★4면 1.3)
+    public static float Multiplier => StarMultipliers[Stars - 1];
+
+    // 빚 빼기 전 점수 = 오늘 매출 × 별 배율
+    public static int FinalScore => Mathf.RoundToInt(Revenue * Multiplier);
+
+    // 순위표에 올리는 점수 = 매출 × 별 배율 − 남은 빚 (0점 아래로는 안 내려감)
+    public static int ScoreAfterDebt(int debt) => Mathf.Max(0, FinalScore - Mathf.Max(0, debt));
+
+    // ---------- 최고 점수 (게임을 껐다 켜도 남음) ----------
+    private const string BestKey = "BestScore";
+    public static int BestScore => PlayerPrefs.GetInt(BestKey, 0);
+
+    // 최고 점수보다 높으면 저장하고 true
+    public static bool SaveBest(int score)
+    {
+        if (score <= BestScore) return false;
+        PlayerPrefs.SetInt(BestKey, score);
+        PlayerPrefs.Save();
+        return true;
     }
 
     public static void AddVisitor() { Visitors++; Changed(); }

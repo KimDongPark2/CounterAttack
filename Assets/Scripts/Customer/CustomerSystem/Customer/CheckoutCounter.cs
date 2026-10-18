@@ -38,6 +38,12 @@ public class CheckoutCounter : MonoBehaviour
     public float popDuration = 0.15f;
     public AudioClip placeSound;
 
+    [Header("판매 가격")]
+    [Tooltip("물건에 판매가(SellPrice)를 안 적었으면 주문 가격 × 이 배율로 팜")]
+    public float sellMarkup = 1.5f;
+    [Tooltip("판매가를 이 단위로 반올림 (10이면 450원, 900원 …)")]
+    public int roundTo = 10;
+
     [Header("스캔")]
     public float scanRange = 4f;
     [Tooltip("켜면 물건을 조준해야 찍힘. 끄면 클릭할 때마다 다음 물건이 찍힘")]
@@ -81,6 +87,16 @@ public class CheckoutCounter : MonoBehaviour
     }
 
     public bool IsFront(Customer c) => queue.Count > 0 && queue[0] == c;
+
+    // 손님한테 받는 가격: 물건에 적힌 판매가, 없으면 주문 가격 × 판매 배율
+    public int SellPriceOf(Item_info info)
+    {
+        if (info == null) return 0;
+        if (info.SellPrice > 0) return info.SellPrice;
+        float raw = info.Price * sellMarkup;
+        int unit = Mathf.Max(1, roundTo);
+        return Mathf.RoundToInt(raw / unit) * unit;
+    }
 
     private void RefreshQueue()
     {
@@ -128,7 +144,7 @@ public class CheckoutCounter : MonoBehaviour
         foreach (GameObject obj in waiting)
         {
             Item_info info = obj.GetComponentInChildren<Item_info>(true);
-            if (info != null) OrderTotal += info.Price;
+            OrderTotal += SellPriceOf(info);
         }
 
         if (waiting.Count == 0)
@@ -169,7 +185,7 @@ public class CheckoutCounter : MonoBehaviour
 
         Item_info info = obj.GetComponentInChildren<Item_info>(true);
         CheckoutItem ci = obj.AddComponent<CheckoutItem>();
-        ci.Prepare(info != null ? info.Price : 0, info != null ? info.Name : obj.name);
+        ci.Prepare(SellPriceOf(info), info != null ? info.Name : obj.name);
         pending.Add(ci);
         EnablePhysics(obj);   // Prepare 다음에 (물건이 고정되지 않고 떨어지게)
 

@@ -2,11 +2,12 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 플레이어 카테고리 상품(업그레이드) 카드
+// 바로 사서 바로 적용되는 카드 (장바구니/배달 없음)
+// 카테고리: 자동이면 권총은 "물건", 이동 속도는 "플레이어"
 // 장바구니/배달 없이 "구매"를 누르면 바로 돈을 내고 적용된다
 //   이동 속도: 여러 번 살 수 있음
 //   권총: 한 번만 살 수 있음. 사면 핫바 6번 칸에 권총이 생김
-public class UpgradeCardUI : MonoBehaviour
+public class UpgradeCardUI : MonoBehaviour, IShopCategory
 {
     public enum UpgradeType
     {
@@ -16,6 +17,16 @@ public class UpgradeCardUI : MonoBehaviour
 
     [Header("업그레이드 종류")]
     public UpgradeType type;
+
+    [Header("카테고리")]
+    [Tooltip("켜두면 권총은 물건, 이동 속도는 플레이어 탭에 나옴")]
+    public bool autoCategory = true;
+    [Tooltip("자동을 끄면 이 카테고리 탭에 나옴")]
+    public ProductCardUI.Category category = ProductCardUI.Category.Goods;
+
+    public ProductCardUI.Category ShopCategory =>
+        !autoCategory ? category :
+        type == UpgradeType.Pistol ? ProductCardUI.Category.Goods : ProductCardUI.Category.Player;
 
     [Header("연결")]
     public Player_State state;

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 // - 돈이 바뀌면 숫자가 촤라락 올라가거나 내려감
 // - 칩이 살짝 튀고, 아래에 +6,300원 / -1,200원 팝업이 떴다 사라짐
 // - 짧은 시간에 여러 번 들어오면 팝업 금액이 합쳐짐
+// - 빚이 있으면 칩 아래에 빨간 "빚 10,000원" 꼬리표 (빚이 0이면 숨김)
 // 칩 오브젝트(MoneyChip)에 붙이면 됨
 public class MoneyHUD : MonoBehaviour
 {
@@ -21,6 +22,15 @@ public class MoneyHUD : MonoBehaviour
     public RectTransform punchTarget;
     public float punchScale = 0.12f;
     public float punchTime = 0.25f;
+
+    [Header("빚 꼬리표")]
+    [Tooltip("빨간 꼬리표 오브젝트. 빚이 0이면 꺼짐")]
+    public RectTransform debtTag;
+    public TMP_Text debtText;
+    [Tooltip("{0} = 빚")]
+    public string debtFormat = "빚 {0:N0}원";
+    [Tooltip("꼬리표가 보일 때 팝업을 이만큼 더 아래로 (꼬리표 높이 + 간격)")]
+    public float popupShiftWhenDebt = 60f;
 
     [Header("팝업")]
     public RectTransform popup;
@@ -39,6 +49,9 @@ public class MoneyHUD : MonoBehaviour
     private float countTimer;
 
     private float punchTimer = 99f;
+
+    private int shownDebt = int.MinValue;
+    private float debtPunchTimer = 99f;
 
     private CanvasGroup popupGroup;
     private float popupBaseY;
@@ -59,7 +72,11 @@ public class MoneyHUD : MonoBehaviour
             popupBaseY = popup.anchoredPosition.y;
         }
 
-        if (state != null) Snap(state.money);
+        if (state != null)
+        {
+            Snap(state.money);
+            UpdateDebt(false);
+        }
     }
 
     private void Update()
@@ -74,8 +91,11 @@ public class MoneyHUD : MonoBehaviour
             else Change(diff);
         }
 
+        if (state.debt != shownDebt) UpdateDebt(true);
+
         UpdateCount();
         UpdatePunch();
+        UpdateDebtPunch();
         UpdatePopup();
     }
 
@@ -134,6 +154,30 @@ public class MoneyHUD : MonoBehaviour
         punchTarget.localScale = new Vector3(s, s, 1f);
     }
 
+    // 빚 꼬리표 보이기/숨기기 + 글자
+    private void UpdateDebt(bool animate)
+    {
+        shownDebt = state.debt;
+        bool has = shownDebt > 0;
+        if (debtTag != null && debtTag.gameObject.activeSelf != has) debtTag.gameObject.SetActive(has);
+        if (debtText != null) debtText.text = string.Format(debtFormat, shownDebt);
+        if (animate && has) debtPunchTimer = 0f;
+    }
+
+    private void UpdateDebtPunch()
+    {
+        if (debtTag == null) return;
+        if (debtPunchTimer >= punchTime)
+        {
+            debtTag.localScale = Vector3.one;
+            return;
+        }
+        debtPunchTimer += Time.deltaTime;
+        float k = Mathf.Clamp01(debtPunchTimer / punchTime);
+        float s = 1f + punchScale * 1.5f * Mathf.Sin(k * Mathf.PI);
+        debtTag.localScale = new Vector3(s, s, 1f);
+    }
+
     private void UpdatePopup()
     {
         if (popup == null || popupGroup == null) return;
@@ -143,7 +187,8 @@ public class MoneyHUD : MonoBehaviour
         popupTimer += Time.deltaTime;
         float e = popupTimer;
 
-        float alpha, y = popupBaseY, s = 1f;
+        bool debtShown = debtTag != null && debtTag.gameObject.activeSelf;
+        float alpha, y = popupBaseY - (debtShown ? popupShiftWhenDebt : 0f), s = 1f;
         if (e < fadeIn)
         {
             alpha = e / fadeIn;

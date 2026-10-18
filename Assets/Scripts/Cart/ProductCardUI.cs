@@ -5,7 +5,7 @@ using UnityEngine.UI;
 // 주문 화면 왼쪽 상품 카드 한 장 (A안)
 // 사진, 이름, 설명, 가격, 수량 − / +, 담기 버튼
 // 카드를 Ctrl+D로 복제하고 Category와 Item 칸만 바꾸면 된다
-public class ProductCardUI : MonoBehaviour
+public class ProductCardUI : MonoBehaviour, IShopCategory
 {
     // 카테고리 탭에서 거를 때 쓰는 분류 (Inspector에는 한글로 보임)
     public enum Category
@@ -17,6 +17,7 @@ public class ProductCardUI : MonoBehaviour
 
     [Header("카테고리")]
     public Category category;
+    public Category ShopCategory => category;
 
     [Header("상품")]
     [Tooltip("팔 상품 프리팹 (Item_info가 붙어 있는 것)")]
@@ -58,7 +59,7 @@ public class ProductCardUI : MonoBehaviour
         }
         if (nameText) nameText.text = item.Name;
         if (descText) descText.text = item.Description;
-        if (priceText) priceText.text = $"{Player_State.Won(item.Price)} <size=15>개당</size>";
+        if (priceText) priceText.text = Player_State.Won(item.Price);
         SetQuantity(1);
     }
 

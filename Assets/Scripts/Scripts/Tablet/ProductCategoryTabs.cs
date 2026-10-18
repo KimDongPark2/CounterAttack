@@ -2,7 +2,13 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 주문 화면 카테고리 탭 (Button 그대로 사용)
+// 카테고리를 가진 카드 (음식 상품, 업그레이드, 대출/빚 갚기 카드가 전부 이걸 가짐)
+public interface IShopCategory
+{
+    ProductCardUI.Category ShopCategory { get; }
+}
+
+// 상품 / 재화 화면 카테고리 탭 (Button 그대로 사용)
 //  - 탭은 항상 하나만 선택됨 (다른 곳을 클릭해도 안 풀림)
 //  - 선택된 탭: 흰 배경 + 남색 글자/아이콘, 나머지: 투명 배경 + 흰 글자/아이콘
 //  - 마우스 올리면 살짝 밝아지고, 누르면 조금 더 밝아짐 (Button 색은 스크립트가 알아서 설정)
@@ -62,19 +68,12 @@ public class ProductCategoryTabs : MonoBehaviour
         int total = 0, shown = 0;
         if (productListRoot != null)
         {
-            foreach (ProductCardUI card in productListRoot.GetComponentsInChildren<ProductCardUI>(true))
+            // 상품 카드, 업그레이드 카드(권총·이동 속도), 대출/빚 갚기 카드 전부 자기 카테고리로 거름
+            foreach (MonoBehaviour mb in productListRoot.GetComponentsInChildren<MonoBehaviour>(true))
             {
-                bool show = selected.showAll || card.category == selected.category;
-                card.gameObject.SetActive(show);
-                total++;
-                if (show) shown++;
-            }
-
-            // 업그레이드 카드는 항상 "플레이어" 카테고리
-            foreach (UpgradeCardUI card in productListRoot.GetComponentsInChildren<UpgradeCardUI>(true))
-            {
-                bool show = selected.showAll || selected.category == ProductCardUI.Category.Player;
-                card.gameObject.SetActive(show);
+                if (!(mb is IShopCategory card)) continue;
+                bool show = selected.showAll || card.ShopCategory == selected.category;
+                mb.gameObject.SetActive(show);
                 total++;
                 if (show) shown++;
             }

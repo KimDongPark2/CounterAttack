@@ -68,7 +68,7 @@ public class CustomerSpawner : MonoBehaviour
     public float runSpeed = 3.5f;
     [Tooltip("선반 앞에서 물건 고르는 시간")]
     public float pickTime = 1f;
-    [Tooltip("결제 후 인사하는 시간 (Animator에 Greet 트리거가 있을 때)")]
+    [Tooltip("결제 후 인사(Greet)하는 시간. Greet 애니메이션 길이에 맞추기")]
     public float greetTime = 1.2f;
 
     [Header("만족도 점수")]
@@ -78,7 +78,7 @@ public class CustomerSpawner : MonoBehaviour
     public int missingPoint = -1;
     public int wrongShotPoint = -5;
     public int thiefShotPoint = 3;
-    public int thiefEscapePoint = -1;
+    public int thiefEscapePoint = -3;
 
     public float DayTime { get; private set; }
     public bool DayRunning { get; private set; }
@@ -172,8 +172,11 @@ public class CustomerSpawner : MonoBehaviour
     {
         DayRunning = false;
         if (state != null) state.star = StoreStats.Stars;
+        StoreStats.SaveBest(StoreStats.ScoreAfterDebt(state != null ? state.debt : 0));   // 인트로 화면 최고 점수
         Debug.Log($"[하루 끝] 손님 {StoreStats.Visitors}명, 계산 {StoreStats.Served}명, 매출 {Player_State.Won(StoreStats.Revenue)}, " +
-                  $"화남 {StoreStats.Angry}, 도둑 잡음 {StoreStats.ThievesCaught} / 놓침 {StoreStats.ThievesEscaped}, 별 {StoreStats.Stars}개");
+                  $"화남 {StoreStats.Angry}, 도둑 잡음 {StoreStats.ThievesCaught} / 놓침 {StoreStats.ThievesEscaped}, 별 {StoreStats.Stars}개, " +
+                  $"최종 점수 {StoreStats.ScoreAfterDebt(state != null ? state.debt : 0):N0}점 " +
+                  $"(매출×{StoreStats.Multiplier} = {StoreStats.FinalScore:N0}, 남은 빚 {(state != null ? state.debt : 0):N0})");
         onDayEnd?.Invoke();
     }
 

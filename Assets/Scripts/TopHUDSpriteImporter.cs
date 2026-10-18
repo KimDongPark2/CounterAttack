@@ -16,6 +16,7 @@ public class TopHUDSpriteImporter : AssetPostprocessor
         { "day_bubble",     new Vector4(20, 26, 20, 20) },
         { "hud_chip",       new Vector4(46, 58, 46, 46) },
         { "hud_pill",       new Vector4(22, 22, 22, 22) },
+        { "info_round",     new Vector4(20, 20, 20, 20) },
     };
 
     private void OnPreprocessTexture()
@@ -34,8 +35,11 @@ public class TopHUDSpriteImporter : AssetPostprocessor
         s.spriteMeshType = SpriteMeshType.FullRect;
         s.mipmapEnabled = false;
         s.alphaIsTransparency = true;
-        s.wrapMode = name == "day_stripe" ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
-        s.spriteBorder = Borders.TryGetValue(name, out Vector4 b) ? b : Vector4.zero;
+        // 줄무늬·점선처럼 반복(Tiled)해서 쓰는 그림은 Repeat
+        bool repeat = name.Contains("stripe") || name.Contains("dash");
+        s.wrapMode = repeat ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+        // 목록에 있는 그림만 테두리를 넣음 (나머지는 Sprite Editor에서 직접 넣은 값 유지)
+        if (Borders.TryGetValue(name, out Vector4 b)) s.spriteBorder = b;
         ti.SetTextureSettings(s);
 
         ti.textureCompression = TextureImporterCompression.Uncompressed;
