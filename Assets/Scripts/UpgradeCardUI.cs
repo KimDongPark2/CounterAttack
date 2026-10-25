@@ -71,6 +71,7 @@ public class UpgradeCardUI : MonoBehaviour, IShopCategory
 
     public void Buy()
     {
+        SoundManager.Play(Sfx.ButtonClick);
         if (IsMax || state == null) return;
         if (!state.TrySpend(Price)) return;  // 돈이 모자라면 아무 일도 안 함
 

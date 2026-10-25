@@ -10,6 +10,7 @@ using ConvenienceStore.Tablet;
 // 핫바 1~5번은 물건 칸, 6번은 권총 칸 (상점에서 권총을 사면 생김)
 //   권총을 들고 있으면 클릭 = 쏘기, 아니면 클릭 = 스캔
 //   계산대 안에서는 권총 칸이 잠깐 사라지고 스캐너를 듦 (나오면 다시 권총)
+// 태블릿을 열면 손에 든 총·스캐너는 안 보이게 숨김 (닫으면 다시 보임)
 public class Player_Interaction : MonoBehaviour
 {
     [Header("Components")]
@@ -98,7 +99,7 @@ public class Player_Interaction : MonoBehaviour
     private void OnEnable() => TabletController.OnTabletToggled += HandleTabletToggled;
     private void OnDisable() => TabletController.OnTabletToggled -= HandleTabletToggled;
 
-    // 태블릿이 열려 있는 동안에는 줍기/설치/슬롯 변경을 막는다
+    // 태블릿이 열려 있는 동안에는 줍기/설치/슬롯 변경을 막고, 손에 든 총·스캐너를 숨긴다
     private void HandleTabletToggled(bool open)
     {
         tabletOpen = open;
@@ -106,6 +107,36 @@ public class Player_Interaction : MonoBehaviour
         {
             SetNotice("");
             itemInstall?.CancelHold();
+        }
+        SetHandsHidden(open);
+    }
+
+    // 총·스캐너 숨기기 / 다시 보이기
+    // SetActive(false) 대신 그림(Renderer)만 끔 → 스캐너의 계산대 확인, 총 애니메이션 상태가 그대로 유지돼서
+    // 태블릿을 닫으면 열기 전 모습 그대로 돌아옴
+    private readonly System.Collections.Generic.List<Renderer> hiddenHands = new System.Collections.Generic.List<Renderer>();
+
+    private void SetHandsHidden(bool hide)
+    {
+        if (hide)
+        {
+            if (hiddenHands.Count > 0) return;
+            foreach (GameObject hand in new[] { Scanner, handGun })
+            {
+                if (hand == null) continue;
+                foreach (Renderer r in hand.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (!r.enabled) continue;
+                    r.enabled = false;
+                    hiddenHands.Add(r);
+                }
+            }
+        }
+        else
+        {
+            foreach (Renderer r in hiddenHands)
+                if (r != null) r.enabled = true;
+            hiddenHands.Clear();
         }
     }
 
@@ -178,6 +209,7 @@ public class Player_Interaction : MonoBehaviour
         Destroy(info.gameObject);
         target = null;
         SetNotice("");
+        SoundManager.Play(Sfx.ItemPickup);
     }
 
     // ---------- 숫자키 / 마우스 휠로 슬롯 고르기 ----------
@@ -190,7 +222,7 @@ public class Player_Interaction : MonoBehaviour
         // 6번 키: 권총 (샀을 때만, 계산대 밖에서만)
         if (state.hasGun && !state.inCounter && Keyboard.current != null && Keyboard.current.digit6Key.wasPressedThisFrame)
         {
-            inventoryManager.SelectItem(GunIndex);
+            SelectSlot(GunIndex);
             return;
         }
 
@@ -200,7 +232,7 @@ public class Player_Interaction : MonoBehaviour
             {
                 if (Keyboard.current[slotKeys[i]].wasPressedThisFrame)
                 {
-                    inventoryManager.SelectItem(i + 1);
+                    SelectSlot(i + 1);
                     return;
                 }
             }
@@ -215,14 +247,22 @@ public class Player_Interaction : MonoBehaviour
             if (scroll > 0)
             {
                 int prev = cur <= 1 ? last : (cur == GunIndex ? restrict : cur - 1);
-                inventoryManager.SelectItem(prev);
+                SelectSlot(prev);
             }
             else if (scroll < 0)
             {
                 int next = cur >= last ? 1 : (cur == restrict ? last : cur + 1);
-                inventoryManager.SelectItem(next);
+                SelectSlot(next);
             }
         }
+    }
+
+    // 플레이어가 직접 칸을 바꿀 때 (권총을 꺼낼 때만 소리)
+    private void SelectSlot(int index)
+    {
+        if (index == GunIndex && index != state.handIndex)
+            SoundManager.Play(Sfx.GunDraw);
+        inventoryManager.SelectItem(index);
     }
 
     // ---------- 권총 보이기 / 6번 칸 표시 ----------

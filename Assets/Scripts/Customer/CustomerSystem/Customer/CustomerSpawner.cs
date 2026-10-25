@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
 
-// 하루 진행(5분) + 손님 만들기 + 밸런스 숫자 모음
+// 영업 준비(30초) → 하루 진행(5분) + 손님 만들기 + 밸런스 숫자 모음
 // 숫자는 전부 Inspector에서 바꾸면서 맞추면 됨
 public class CustomerSpawner : MonoBehaviour
 {
@@ -55,6 +57,14 @@ public class CustomerSpawner : MonoBehaviour
     [Tooltip("하루가 끝나면 실행 (정산 화면 열기 등을 여기에 연결)")]
     public UnityEvent onDayEnd;
 
+    [Header("영업 준비")]
+    [Tooltip("셔터가 올라간 뒤 손님이 오기 전까지 물건 채울 시간 (초). 0이면 바로 영업 시작")]
+    public float prepTime = 30f;
+    [Tooltip("준비 중에 Enter를 누르면 바로 영업 시작")]
+    public bool allowSkip = true;
+    [Tooltip("영업이 시작될 때 실행 (선택)")]
+    public UnityEvent onDayStart;
+
     [Header("손님")]
     public int maxCustomers = 6;
     [Range(0f, 1f)] public float thiefChance = 0.1f;
@@ -83,6 +93,9 @@ public class CustomerSpawner : MonoBehaviour
     public float DayTime { get; private set; }
     public bool DayRunning { get; private set; }
     public string ClockText { get; private set; } = "";
+    // 영업 준비 중인지, 남은 준비 시간 (PrepCountdownUI가 읽음)
+    public bool Preparing { get; private set; }
+    public float PrepTimeLeft { get; private set; }
 
     private float spawnTimer;
 
@@ -99,20 +112,57 @@ public class CustomerSpawner : MonoBehaviour
             return;
         }
 
-        if (startOnPlay) StartDay();
+        if (startOnPlay) StartCoroutine(StartWhenShutterOpens());
+    }
+
+    // 씬 전환 셔터가 내려와 있으면 올라가기 시작할 때 준비 시작 (셔터가 없으면 바로)
+    private IEnumerator StartWhenShutterOpens()
+    {
+        while (SceneShutter.Blocking) yield return null;
+        BeginPrep();
+    }
+
+    // 영업 준비: 손님은 안 오고 시계도 9시에 멈춰 있음. 시간이 다 되거나 Enter를 누르면 영업 시작
+    public void BeginPrep()
+    {
+        DayRunning = false;
+        DayTime = 0f;
+        StoreStats.Reset();
+        UpdateClock();
+        if (prepTime <= 0f) { StartDay(); return; }
+        Preparing = true;
+        PrepTimeLeft = prepTime;
+    }
+
+    // 버튼에서 "바로 영업 시작"으로 쓰고 싶을 때
+    public void SkipPrep()
+    {
+        if (Preparing) PrepTimeLeft = 0f;
     }
 
     public void StartDay()
     {
+        Preparing = false;
+        PrepTimeLeft = 0f;
         DayTime = 0f;
         spawnTimer = 2f; // 시작하고 2초 뒤 첫 손님
         DayRunning = true;
         StoreStats.Reset();
         UpdateClock();
+        onDayStart?.Invoke();
     }
 
     private void Update()
     {
+        if (Preparing)
+        {
+            PrepTimeLeft -= Time.deltaTime;
+            Keyboard kb = Keyboard.current;
+            if (allowSkip && kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) PrepTimeLeft = 0f;
+            if (PrepTimeLeft <= 0f) StartDay();
+            return;
+        }
+
         if (!DayRunning) return;
 
         DayTime += Time.deltaTime;

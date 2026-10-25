@@ -24,11 +24,18 @@ public class CartPanelUI : MonoBehaviour
     public float messageDuration = 2.5f;
 
     private Coroutine messageRoutine;
+    private readonly List<CartSlotUI> spawned = new List<CartSlotUI>();   // 이 스크립트가 만든 줄만 기억
 
     private void Awake()
     {
         if (orderButton) orderButton.onClick.AddListener(OnClickOrder);
         if (messageText) messageText.text = "";
+
+        // 편집 화면에서 미리 넣어둔 예시 줄은 처음 갱신할 때 지움 (합계 줄 같은 다른 자식은 안 건드림)
+        foreach (CartSlotUI s in contentRoot.GetComponentsInChildren<CartSlotUI>(true))
+            if (s != slotPrefab) spawned.Add(s);
+        // 줄 틀(slotPrefab)을 씬 안에 놔뒀다면 숨겨두고 복사해서만 씀
+        if (slotPrefab != null && slotPrefab.gameObject.scene.IsValid()) slotPrefab.gameObject.SetActive(false);
     }
 
     private void OnEnable()
@@ -46,11 +53,24 @@ public class CartPanelUI : MonoBehaviour
 
     private void Refresh()
     {
-        for (int i = contentRoot.childCount - 1; i >= 0; i--)
-            Destroy(contentRoot.GetChild(i).gameObject);
+        // 전에 만든 줄만 지우기 (예전엔 Content 안의 자식을 전부 지워서, 거기 있던 합계 줄까지 사라졌음)
+        foreach (CartSlotUI s in spawned)
+        {
+            if (s == null) continue;
+            s.gameObject.SetActive(false);
+            Destroy(s.gameObject);
+        }
+        spawned.Clear();
 
+        int index = 0;
         foreach (var e in cart.items)
-            Instantiate(slotPrefab, contentRoot).Bind(e.item, e.count, cart);
+        {
+            CartSlotUI slot = Instantiate(slotPrefab, contentRoot);
+            slot.gameObject.SetActive(true);
+            slot.transform.SetSiblingIndex(index++);   // 목록은 위에서부터, 합계 줄 같은 건 그 아래에 그대로
+            slot.Bind(e.item, e.count, cart);
+            spawned.Add(slot);
+        }
 
         int total = cart.TotalPrice;
         if (countText) countText.text = cart.TotalCount.ToString();
@@ -65,6 +85,7 @@ public class CartPanelUI : MonoBehaviour
 
         if (!state.TrySpend(total))
         {
+            SoundManager.Play(Sfx.ButtonClick);
             ShowMessage($"돈이 부족해요 (필요: {Player_State.Won(total)})");
             return;
         }
@@ -76,6 +97,7 @@ public class CartPanelUI : MonoBehaviour
 
         delivery.Deliver(order);
         cart.Clear();
+        SoundManager.Play(Sfx.OrderDone);
         ShowMessage("주문 완료! 곧 배달이 도착해요");
     }
 

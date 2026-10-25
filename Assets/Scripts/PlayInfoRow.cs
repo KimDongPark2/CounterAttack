@@ -14,9 +14,23 @@ public class PlayInfoRow : MonoBehaviour
     public TMP_Text valueText;
 
     private CanvasGroup group;
+    private bool prepared;
+
+    // 글자가 칸보다 길어도 두 줄로 쪼개지지 않게 (예: "+65"가 "+6" / "5"로 나뉘던 문제)
+    private void Prepare()
+    {
+        prepared = true;
+        foreach (TMP_Text t in new[] { nameText, eachText, valueText })
+        {
+            if (t == null) continue;
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            t.overflowMode = TextOverflowModes.Overflow;
+        }
+    }
 
     public void Set(Sprite sprite, string label, string each, string value, Color valueColor, float alpha)
     {
+        if (!prepared) Prepare();
         if (icon != null && sprite != null) icon.sprite = sprite;
         if (nameText != null) nameText.text = label;
         if (eachText != null) eachText.text = each;

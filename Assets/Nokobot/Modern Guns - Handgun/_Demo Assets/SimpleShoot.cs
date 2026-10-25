@@ -45,6 +45,7 @@ public class SimpleShoot : MonoBehaviour
     {
         // 발사 애니메이션 (반동, 총구 불꽃, 탄피는 애니메이션 이벤트로 나옴)
         if (gunAnimator != null) gunAnimator.SetTrigger("Fire");
+        SoundManager.Play(Sfx.GunShot);
 
         // 화면 가운데(조준점)로 레이 발사. 트리거 상자(ScanPoint 등)는 무시
         Ray ray = new Ray(shootCamera.transform.position, shootCamera.transform.forward);

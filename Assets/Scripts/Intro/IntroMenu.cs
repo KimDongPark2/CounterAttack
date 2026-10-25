@@ -2,11 +2,10 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 // 인트로 영수증 메뉴
 // - ↑ ↓ (또는 W S)로 줄 옮기기, Space / Enter로 실행, 마우스도 됨
-// - 게임 시작: Game 씬 불러오기 / 나가기: 게임 끄기 / 준비 중: 안내 글자 잠깐 띄우기
+// - 게임 시작: 셔터 내리고 Game 씬 불러오기 / 나가기: 게임 끄기 / 준비 중: 안내 글자 잠깐 띄우기
 // - 최고 점수 표시 (하루 끝날 때 저장된 값)
 // 메뉴 줄들을 담은 오브젝트(Menu)에 붙이면 됨
 public class IntroMenu : MonoBehaviour
@@ -35,10 +34,6 @@ public class IntroMenu : MonoBehaviour
     public float punchScale = 0.04f;
     public float punchTime = 0.15f;
 
-    [Header("소리 (선택)")]
-    public AudioSource audioSource;
-    public AudioClip moveSound;
-    public AudioClip chooseSound;
 
     private readonly List<IntroMenuRow> rows = new List<IntroMenuRow>();
     private int current = -1;
@@ -74,7 +69,7 @@ public class IntroMenu : MonoBehaviour
     private void Update()
     {
         Keyboard kb = Keyboard.current;
-        if (kb != null && !loading)
+        if (kb != null && !loading && !SceneShutter.Busy)   // 처음 셔터가 올라가는 동안엔 입력 안 받음
         {
             if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) Select(current - 1);
             if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) Select(current + 1);
@@ -118,21 +113,21 @@ public class IntroMenu : MonoBehaviour
             rows[i].Paint(i == current, textSelected, textNormal, dotsSelected, dotsNormal);
 
         punchTimer = 0f;
-        if (sound) Play(moveSound);
+        if (sound) SoundManager.Play(Sfx.MenuMove);
     }
 
     public void Choose()
     {
-        if (loading || current < 0 || current >= rows.Count) return;
+        if (loading || SceneShutter.Busy || current < 0 || current >= rows.Count) return;
         IntroMenuRow row = rows[current];
-        Play(chooseSound);
+        SoundManager.Play(Sfx.MenuChoose);   // 소리 파일은 SoundManager에
         row.onChoose?.Invoke();
 
         switch (row.action)
         {
             case IntroMenuRow.RowAction.StartGame:
                 loading = true;
-                SceneManager.LoadScene(gameSceneName);
+                SceneShutter.Load(gameSceneName);   // 셔터 내리고 → 씬 바꾸고 → 셔터 올리기 (셔터가 없으면 바로 넘어감)
                 break;
 
             case IntroMenuRow.RowAction.Quit:
@@ -152,10 +147,5 @@ public class IntroMenu : MonoBehaviour
                 }
                 break;
         }
-    }
-
-    private void Play(AudioClip clip)
-    {
-        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
     }
 }

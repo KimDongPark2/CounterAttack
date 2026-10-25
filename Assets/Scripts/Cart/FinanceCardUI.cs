@@ -81,6 +81,7 @@ public class FinanceCardUI : MonoBehaviour, IShopCategory
 
     public void Use()
     {
+        SoundManager.Play(Sfx.ButtonClick);
         if (!CanUse) return;
 
         if (type == FinanceType.Loan)

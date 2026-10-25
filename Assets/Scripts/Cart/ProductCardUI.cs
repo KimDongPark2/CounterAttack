@@ -73,6 +73,7 @@ public class ProductCardUI : MonoBehaviour, IShopCategory
     {
         if (item == null || cart == null) return;
         cart.Add(item, quantity);
+        SoundManager.Play(Sfx.ButtonClick);
         SetQuantity(1);
     }
 }

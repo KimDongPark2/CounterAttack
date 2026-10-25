@@ -42,6 +42,14 @@ public class Customer : MonoBehaviour
     [Tooltip("래그돌이 없는 모델일 때만: 통째로 넘어지는 힘")]
     public float fallbackPush = 3f;
 
+    [Header("길막 풀기")]
+    [Tooltip("가려는 곳이 있는데 이 시간(초) 동안 거의 못 움직이면 막힌 걸로 봄")]
+    public float stuckTime = 1.2f;
+    [Tooltip("막혔을 때 다른 손님을 안 피하고 그냥 지나가는 시간(초)")]
+    public float passThroughTime = 1.5f;
+    [Tooltip("막혔는데 목적지가 이만큼(몸 반지름의 몇 배) 안이면 도착한 걸로 침 (그 자리에 다른 손님이 서 있을 때)")]
+    public float closeEnough = 4f;
+
     public CustomerType Type { get; private set; }
     public float PatienceRatio => maxPatience > 0 ? Mathf.Clamp01(patience / maxPatience) : 1f;
 
@@ -65,6 +73,10 @@ public class Customer : MonoBehaviour
     private bool initialized;   // CustomerSpawner가 Setup을 불렀는지
     private Vector3 faceDir;
 
+    private float stuckTimer, passTimer;
+    private bool forcedArrive;                  // 막혀서 "도착한 걸로" 친 상태 (다음 이동 때 풀림)
+    private ObstacleAvoidanceType normalAvoidance;
+
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -73,6 +85,10 @@ public class Customer : MonoBehaviour
             foreach (AnimatorControllerParameter p in anim.parameters) animParams.Add(p.name);
 
         // 래그돌: 살아 있는 동안은 뼈 물리를 꺼둠 (애니메이션이 움직이게)
+        // 손님마다 비키는 순서를 다르게 (둘 다 똑같이 피하려다 서로 멈추는 걸 줄임)
+        normalAvoidance = agent.obstacleAvoidanceType;
+        agent.avoidancePriority = Random.Range(30, 70);
+
         rootCollider = GetComponent<Collider>();
         List<Rigidbody> bones = new List<Rigidbody>();
         foreach (Rigidbody rb in GetComponentsInChildren<Rigidbody>(true))
@@ -92,6 +108,8 @@ public class Customer : MonoBehaviour
         agent.speed = type == CustomerType.Hurry ? s.hurrySpeed : s.walkSpeed;
         maxPatience = patience = type == CustomerType.Hurry ? s.hurryPatience : s.normalPatience;
         if (angryMark != null) angryMark.SetActive(false);
+        // 뼈 콜라이더는 플레이어와 안 부딪히게 (막는 건 몸통 캡슐만)
+        if (rootCollider != null) IgnorePlayer(true);
         if (!agent.isOnNavMesh)
             Debug.LogWarning($"[Customer] '{name}'이(가) NavMesh 위에 없습니다. 바닥에 NavMesh Surface를 Bake했는지, 입구가 바닥 위에 있는지 확인하세요.");
 
@@ -126,6 +144,8 @@ public class Customer : MonoBehaviour
     private void Update()
     {
         if (!initialized || state == State.Gone) return;
+
+        UpdateStuck();
 
         switch (state)
         {
@@ -258,6 +278,7 @@ public class Customer : MonoBehaviour
         if (Type == CustomerType.Thief)
         {
             Leave(true); // 계산 안 하고 도망
+            SoundManager.PlayAt(Sfx.ThiefRun, transform.position);
             return;
         }
         state = State.Queue;
@@ -295,6 +316,7 @@ public class Customer : MonoBehaviour
 
     private void GetAngry()
     {
+        SoundManager.PlayAt(Sfx.CustomerAngry, transform.position);
         StoreStats.AddAngry(spawner.angryPoint);
         if (spawner.state != null) spawner.state.badProcess++;
 
@@ -338,7 +360,10 @@ public class Customer : MonoBehaviour
     private void Finish()
     {
         if (Type == CustomerType.Thief && carried.Count > 0)
+        {
             StoreStats.AddThiefEscaped(spawner.thiefEscapePoint);
+            SoundManager.Play(Sfx.ThiefEscaped);
+        }
         state = State.Gone;
         Destroy(gameObject); // 들고 있던(훔친) 물건도 같이 사라짐
     }
@@ -348,7 +373,12 @@ public class Customer : MonoBehaviour
     {
         if (state == State.Gone) return;
 
-        if (Type == CustomerType.Thief) StoreStats.AddThiefCaught(spawner.thiefShotPoint);
+        SoundManager.Play(Sfx.BodyHit);   // 맞혔다는 손맛이라 멀리서 쏴도 똑같이 들리게 (2D)
+        if (Type == CustomerType.Thief)
+        {
+            StoreStats.AddThiefCaught(spawner.thiefShotPoint);
+            SoundManager.Play(Sfx.ThiefCaught);
+        }
         else
         {
             StoreStats.AddWrongShot(spawner.wrongShotPoint);
@@ -375,6 +405,7 @@ public class Customer : MonoBehaviour
             // 힘 풀리면서 쓰러지기: 애니메이션 끄고 뼈 물리 켜기
             if (anim != null) anim.enabled = false;
             if (rootCollider != null) rootCollider.enabled = false;
+            IgnorePlayer(false);   // 흐물거리는 몸이 플레이어를 밀어 올리거나 기울이지 않게
             SetRagdoll(true);
 
             // 몸 전체를 맞은 방향으로 날리고, 맞은 부위는 더 세게 (흐물거리며 날아감)
@@ -394,6 +425,7 @@ public class Customer : MonoBehaviour
             Debug.LogWarning($"[Customer] '{name}'에 래그돌이 없어서 통째로 넘어집니다. 손님 프리팹에 Ragdoll을 만들어주세요.", this);
             // 래그돌이 없는 모델: 몸 전체가 맞은 방향으로 넘어짐
             if (anim != null) anim.enabled = false;
+            IgnorePlayer(false);
             Rigidbody rb = GetComponent<Rigidbody>();
             if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
             rb.isKinematic = false;
@@ -402,6 +434,21 @@ public class Customer : MonoBehaviour
         }
 
         Destroy(gameObject, removeDelay);
+    }
+
+    // 손님 콜라이더와 플레이어 콜라이더가 서로 안 부딪히게 (총알 레이캐스트는 그대로 맞음)
+    // bonesOnly = true면 몸통 캡슐은 빼고 (살아 있는 손님은 캡슐로만 플레이어를 막음)
+    private void IgnorePlayer(bool bonesOnly)
+    {
+        Player_State player = spawner != null && spawner.state != null ? spawner.state : FindAnyObjectByType<Player_State>();
+        if (player == null) return;
+        Collider[] playerCols = player.GetComponentsInChildren<Collider>(true);
+        foreach (Collider c in GetComponentsInChildren<Collider>(true))
+        {
+            if (bonesOnly && c == rootCollider) continue;
+            foreach (Collider pc in playerCols)
+                if (pc != null) Physics.IgnoreCollision(c, pc, true);
+        }
     }
 
     // 뼈 물리 켜기/끄기
@@ -487,10 +534,46 @@ public class Customer : MonoBehaviour
         if (counter != null) counter.Remove(this);
     }
 
+    // ---------- 길막 풀기 ----------
+    // 가려는 곳이 있는데 한동안 거의 못 움직이면:
+    //  - 목적지가 코앞이면 → 도착한 걸로 침 (그 자리에 다른 손님이 서 있는 경우)
+    //  - 아니면 → 잠깐 다른 손님을 안 피하고 그냥 지나감 (좁은 통로에서 마주쳐 서로 멈춘 경우)
+    private void UpdateStuck()
+    {
+        if (!agent.enabled || !agent.isOnNavMesh) return;
+
+        if (passTimer > 0f)
+        {
+            passTimer -= Time.deltaTime;
+            if (passTimer <= 0f) agent.obstacleAvoidanceType = normalAvoidance;
+        }
+
+        float arriveDist = agent.stoppingDistance + Mathf.Max(0.2f, agent.radius);
+        bool wantsToMove = !forcedArrive && agent.hasPath && !agent.pathPending && agent.remainingDistance > arriveDist;
+        if (wantsToMove && agent.velocity.magnitude < agent.speed * 0.15f) stuckTimer += Time.deltaTime;
+        else stuckTimer = 0f;
+
+        if (stuckTimer < stuckTime) return;
+        stuckTimer = 0f;
+
+        if (agent.remainingDistance <= agent.radius * closeEnough)
+        {
+            forcedArrive = true;
+            agent.ResetPath();
+        }
+        else
+        {
+            agent.obstacleAvoidanceType = ObstacleAvoidanceType.NoObstacleAvoidance;
+            passTimer = passThroughTime;
+        }
+    }
+
     // ---------- 이동 도우미 ----------
     private void MoveTo(Vector3 pos)
     {
         if (!agent.enabled || !agent.isOnNavMesh) return;
+        forcedArrive = false;
+        stuckTimer = 0f;
         agent.SetDestination(pos);
         walking = true;
     }
@@ -498,6 +581,7 @@ public class Customer : MonoBehaviour
     private bool Arrived()
     {
         if (!agent.enabled || !agent.isOnNavMesh) return true;
+        if (forcedArrive) return true;
         if (agent.pathPending) return false;
         if (agent.pathStatus == NavMeshPathStatus.PathInvalid) return true; // 갈 수 없는 곳이면 멈춰 있지 않게
         return agent.remainingDistance <= agent.stoppingDistance + Mathf.Max(0.2f, agent.radius);
