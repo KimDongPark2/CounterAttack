@@ -5,13 +5,17 @@ using UnityEngine.InputSystem;
 
 // 인트로 영수증 메뉴
 // - ↑ ↓ (또는 W S)로 줄 옮기기, Space / Enter로 실행, 마우스도 됨
-// - 게임 시작: 셔터 내리고 Game 씬 불러오기 / 나가기: 게임 끄기 / 준비 중: 안내 글자 잠깐 띄우기
+// - 게임 시작: 명찰(Staff Badge)이 있으면 명찰 열기, 없으면 셔터 내리고 Game 씬 불러오기 / 나가기: 게임 끄기 / 준비 중: 안내 글자 잠깐 띄우기
 // - 최고 점수 표시 (하루 끝날 때 저장된 값)
 // 메뉴 줄들을 담은 오브젝트(Menu)에 붙이면 됨
 public class IntroMenu : MonoBehaviour
 {
     [Tooltip("게임 시작을 누르면 불러올 씬 이름 (Build Settings에 들어가 있어야 함)")]
     public string gameSceneName = "Game";
+    [Tooltip("넣으면 게임 시작 → 명찰(이름 · 사진) 먼저 열림. 비우면 바로 Game 씬")]
+    public StaffBadge staffBadge;
+    [Tooltip("메뉴 줄(IntroMenuRow)을 찾을 곳. 비우면 이 오브젝트 아래 전부 (게임 끝 영수증에선 Buttons를 넣기)")]
+    public Transform rowsRoot;
 
     [Header("최고 점수 (선택)")]
     public TMP_Text bestScoreText;
@@ -21,6 +25,7 @@ public class IntroMenu : MonoBehaviour
     [Header("준비 중 안내 (선택)")]
     public TMP_Text toastText;
     public string comingSoonMessage = "아직 준비 중이에요!";
+    public string resetMessage = "순위표를 전부 지웠어요";
     public float toastTime = 1.5f;
 
     [Header("색")]
@@ -48,7 +53,7 @@ public class IntroMenu : MonoBehaviour
         Cursor.visible = true;
         Time.timeScale = 1f;
 
-        foreach (IntroMenuRow r in GetComponentsInChildren<IntroMenuRow>(true))
+        foreach (IntroMenuRow r in (rowsRoot != null ? rowsRoot : transform).GetComponentsInChildren<IntroMenuRow>(true))
         {
             r.menu = this;
             r.index = rows.Count;
@@ -69,11 +74,14 @@ public class IntroMenu : MonoBehaviour
     private void Update()
     {
         Keyboard kb = Keyboard.current;
-        if (kb != null && !loading && !SceneShutter.Busy)   // 처음 셔터가 올라가는 동안엔 입력 안 받음
+        if (kb != null && !loading && !SceneShutter.Busy && !StaffBadge.IsOpen)   // 셔터가 움직이는 동안, 명찰이 열려 있는 동안엔 입력 안 받음
         {
             if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) Select(current - 1);
             if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) Select(current + 1);
             if (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame) Choose();
+
+            // 순위표 전부 지우기 (시연 끝나고): Ctrl + Shift + R · 명찰이 연결된 인트로에서만
+            if (staffBadge != null && kb.ctrlKey.isPressed && kb.shiftKey.isPressed && kb.rKey.wasPressedThisFrame) ResetRanking();
         }
 
         // 선택한 줄 살짝 튀기
@@ -99,7 +107,11 @@ public class IntroMenu : MonoBehaviour
         }
     }
 
-    public void Select(int index) => Select(index, true);
+    public void Select(int index)
+    {
+        if (StaffBadge.IsOpen) return;   // 명찰 뒤에 있는 줄에 마우스가 닿아도 무시
+        Select(index, true);
+    }
 
     private void Select(int index, bool sound)
     {
@@ -118,7 +130,7 @@ public class IntroMenu : MonoBehaviour
 
     public void Choose()
     {
-        if (loading || SceneShutter.Busy || current < 0 || current >= rows.Count) return;
+        if (loading || SceneShutter.Busy || StaffBadge.IsOpen || current < 0 || current >= rows.Count) return;
         IntroMenuRow row = rows[current];
         SoundManager.Play(Sfx.MenuChoose);   // 소리 파일은 SoundManager에
         row.onChoose?.Invoke();
@@ -126,6 +138,11 @@ public class IntroMenu : MonoBehaviour
         switch (row.action)
         {
             case IntroMenuRow.RowAction.StartGame:
+                if (staffBadge != null)
+                {
+                    staffBadge.Open();   // 명찰에서 "근무 시작"을 누르면 그쪽에서 Game 씬으로 넘어감
+                    break;
+                }
                 loading = true;
                 SceneShutter.Load(gameSceneName);   // 셔터 내리고 → 씬 바꾸고 → 셔터 올리기 (셔터가 없으면 바로 넘어감)
                 break;
@@ -139,13 +156,24 @@ public class IntroMenu : MonoBehaviour
                 break;
 
             case IntroMenuRow.RowAction.ComingSoon:
-                if (toastText != null)
-                {
-                    toastText.text = comingSoonMessage;
-                    toastText.alpha = 1f;
-                    toastTimer = 0f;
-                }
+                ShowToast(comingSoonMessage);
                 break;
         }
+    }
+
+    private void ResetRanking()
+    {
+        RankingStore.Clear();
+        if (bestScoreText != null) bestScoreText.text = noScoreText;
+        SoundManager.Play(Sfx.MenuChoose);
+        ShowToast(resetMessage);
+    }
+
+    private void ShowToast(string message)
+    {
+        if (toastText == null) return;
+        toastText.text = message;
+        toastText.alpha = 1f;
+        toastTimer = 0f;
     }
 }

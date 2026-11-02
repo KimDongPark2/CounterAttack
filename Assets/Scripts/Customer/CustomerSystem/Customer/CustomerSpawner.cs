@@ -39,6 +39,8 @@ public class CustomerSpawner : MonoBehaviour
 
     [Header("하루")]
     public bool startOnPlay = true;
+    [Tooltip("켜면 시계(준비 시간 · 하루 시간)가 멈춤. 손님은 계속 옴 (치트 '시간 정지'가 켜고 끔)")]
+    public bool clockStopped = false;
     public float dayLength = 300f;
     [Tooltip("이 시각(초)부터는 손님이 안 들어옴")]
     public float stopSpawnTime = 280f;
@@ -156,7 +158,7 @@ public class CustomerSpawner : MonoBehaviour
     {
         if (Preparing)
         {
-            PrepTimeLeft -= Time.deltaTime;
+            if (!clockStopped) PrepTimeLeft -= Time.deltaTime;
             Keyboard kb = Keyboard.current;
             if (allowSkip && kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) PrepTimeLeft = 0f;
             if (PrepTimeLeft <= 0f) StartDay();
@@ -165,7 +167,7 @@ public class CustomerSpawner : MonoBehaviour
 
         if (!DayRunning) return;
 
-        DayTime += Time.deltaTime;
+        if (!clockStopped) DayTime += Time.deltaTime;
         UpdateClock();
 
         if (DayTime < stopSpawnTime)
