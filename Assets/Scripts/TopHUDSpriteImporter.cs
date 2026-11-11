@@ -3,9 +3,10 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-// TopHUD 폴더에 들어온 그림을 자동으로 UI 스프라이트로 설정
+// Assets/Icon (또는 TopHUD 폴더)에 들어온 그림을 자동으로 UI 스프라이트로 설정
 // (Sprite 타입, 9-slice 테두리, 압축 끔)
-// 그림을 넣기 전에 이 스크립트를 먼저 넣어두기. 이미 넣었다면 TopHUD 폴더 우클릭 → Reimport
+// 그림을 넣기 전에 이 스크립트를 먼저 넣어두기. 이미 넣었다면 폴더 우클릭 → Reimport
+// 에디터 전용 스크립트라 Assets/Editor 폴더에 있어야 게임 빌드할 때 오류가 안 남
 public class TopHUDSpriteImporter : AssetPostprocessor
 {
     // 왼쪽, 아래, 오른쪽, 위 (픽셀)
@@ -25,7 +26,7 @@ public class TopHUDSpriteImporter : AssetPostprocessor
     private void OnPreprocessTexture()
     {
         string path = assetPath.Replace('\\', '/');
-        if (!path.Contains("/TopHUD/")) return;
+        if (!path.StartsWith("Assets/Icon/") && !path.Contains("/TopHUD/")) return;
 
         TextureImporter ti = (TextureImporter)assetImporter;
         string name = Path.GetFileNameWithoutExtension(path);

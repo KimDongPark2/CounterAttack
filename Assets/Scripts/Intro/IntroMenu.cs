@@ -16,6 +16,8 @@ public class IntroMenu : MonoBehaviour
     public StaffBadge staffBadge;
     [Tooltip("메뉴 줄(IntroMenuRow)을 찾을 곳. 비우면 이 오브젝트 아래 전부 (게임 끝 영수증에선 Buttons를 넣기)")]
     public Transform rowsRoot;
+    [Tooltip("이 창들 중 하나라도 켜져 있으면 메뉴가 키 · 마우스를 안 받음 (순위표 창, 설정 창 등)")]
+    public GameObject[] blockingPanels;
 
     [Header("최고 점수 (선택)")]
     public TMP_Text bestScoreText;
@@ -74,7 +76,7 @@ public class IntroMenu : MonoBehaviour
     private void Update()
     {
         Keyboard kb = Keyboard.current;
-        if (kb != null && !loading && !SceneShutter.Busy && !StaffBadge.IsOpen)   // 셔터가 움직이는 동안, 명찰이 열려 있는 동안엔 입력 안 받음
+        if (kb != null && !loading && !SceneShutter.Busy && !Blocked)   // 셔터가 움직이는 동안, 명찰 · 순위표 · 설정 창이 열려 있는 동안엔 입력 안 받음
         {
             if (kb.upArrowKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame) Select(current - 1);
             if (kb.downArrowKey.wasPressedThisFrame || kb.sKey.wasPressedThisFrame) Select(current + 1);
@@ -109,7 +111,7 @@ public class IntroMenu : MonoBehaviour
 
     public void Select(int index)
     {
-        if (StaffBadge.IsOpen) return;   // 명찰 뒤에 있는 줄에 마우스가 닿아도 무시
+        if (Blocked) return;   // 창 뒤에 있는 줄에 마우스가 닿아도 무시
         Select(index, true);
     }
 
@@ -130,7 +132,7 @@ public class IntroMenu : MonoBehaviour
 
     public void Choose()
     {
-        if (loading || SceneShutter.Busy || StaffBadge.IsOpen || current < 0 || current >= rows.Count) return;
+        if (loading || SceneShutter.Busy || Blocked || current < 0 || current >= rows.Count) return;
         IntroMenuRow row = rows[current];
         SoundManager.Play(Sfx.MenuChoose);   // 소리 파일은 SoundManager에
         row.onChoose?.Invoke();
@@ -158,6 +160,19 @@ public class IntroMenu : MonoBehaviour
             case IntroMenuRow.RowAction.ComingSoon:
                 ShowToast(comingSoonMessage);
                 break;
+        }
+    }
+
+    // 명찰이나 다른 창이 위에 떠 있는지
+    private bool Blocked
+    {
+        get
+        {
+            if (StaffBadge.IsOpen) return true;
+            if (blockingPanels != null)
+                foreach (GameObject p in blockingPanels)
+                    if (p != null && p.activeInHierarchy) return true;
+            return false;
         }
     }
 

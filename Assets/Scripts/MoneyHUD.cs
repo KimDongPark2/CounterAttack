@@ -128,7 +128,7 @@ public class MoneyHUD : MonoBehaviour
     private void UpdateCount()
     {
         if (countTimer >= countTime) return;
-        countTimer += Time.deltaTime;
+        countTimer += Time.unscaledDeltaTime;
         float k = countTime > 0f ? Mathf.Clamp01(countTimer / countTime) : 1f;
         k = 1f - (1f - k) * (1f - k); // 끝에서 천천히
         shown = Mathf.Lerp(countFrom, target, k);
@@ -148,7 +148,7 @@ public class MoneyHUD : MonoBehaviour
             punchTarget.localScale = Vector3.one;
             return;
         }
-        punchTimer += Time.deltaTime;
+        punchTimer += Time.unscaledDeltaTime;
         float k = Mathf.Clamp01(punchTimer / punchTime);
         float s = 1f + punchScale * Mathf.Sin(k * Mathf.PI);
         punchTarget.localScale = new Vector3(s, s, 1f);
@@ -172,7 +172,7 @@ public class MoneyHUD : MonoBehaviour
             debtTag.localScale = Vector3.one;
             return;
         }
-        debtPunchTimer += Time.deltaTime;
+        debtPunchTimer += Time.unscaledDeltaTime;
         float k = Mathf.Clamp01(debtPunchTimer / punchTime);
         float s = 1f + punchScale * 1.5f * Mathf.Sin(k * Mathf.PI);
         debtTag.localScale = new Vector3(s, s, 1f);
@@ -184,7 +184,7 @@ public class MoneyHUD : MonoBehaviour
 
         const float fadeIn = 0.12f;
         const float fadeOut = 0.35f;
-        popupTimer += Time.deltaTime;
+        popupTimer += Time.unscaledDeltaTime;
         float e = popupTimer;
 
         bool debtShown = debtTag != null && debtTag.gameObject.activeSelf;

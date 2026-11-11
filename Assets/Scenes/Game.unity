@@ -51368,7 +51368,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 137634705769930734, guid: 8c93ef14ef27fc744932c4d0febf659e, type: 3}
       propertyPath: m_text
-      value: "\uC2DC\uAC04 \uC870\uC808"
+      value: "\uC2DC\uAC04 \uC870\uC791"
       objectReference: {fileID: 0}
     - target: {fileID: 137634705769930734, guid: 8c93ef14ef27fc744932c4d0febf659e, type: 3}
       propertyPath: m_fontSize
@@ -205715,7 +205715,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Cheat
+  m_text: 'USING CHEAT
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: bd15d9413d734fb4f8803b8e3ebcf575, type: 2}
   m_sharedMaterial: {fileID: -2864352575070551376, guid: bd15d9413d734fb4f8803b8e3ebcf575, type: 2}

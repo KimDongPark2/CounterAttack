@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player_movement : MonoBehaviour
@@ -9,7 +9,7 @@ public class Player_movement : MonoBehaviour
     private bool isSitting;
     private bool isLookingUp;
 
-    // ¼­ ÀÖÀ» ¶§ ¿ø·¡ °ª ±â¾ïÇØµÎ±â
+    // ì„œ ìˆì„ ë•Œ ì›ë˜ ê°’ ê¸°ì–µí•´ë‘ê¸°
     private float standHeight;
     private Vector3 standCenter;
     private Vector3 cameraStandPos;
@@ -21,14 +21,14 @@ public class Player_movement : MonoBehaviour
 
     [Header("Sit Settings")]
     public float sitHeight = 1f;
-    public Transform cameraTransform;    // 1ÀÎÄª Ä«¸Ş¶ó
-    public float cameraSitOffset = 0.5f; // ¾ÉÀ» ¶§ Ä«¸Ş¶ó ³»·Á°¡´Â Á¤µµ
+    public Transform cameraTransform;    // 1ì¸ì¹­ ì¹´ë©”ë¼
+    public float cameraSitOffset = 0.5f; // ì•‰ì„ ë•Œ ì¹´ë©”ë¼ ë‚´ë ¤ê°€ëŠ” ì •ë„
 
     [Header("LookUp Settings")]
-    public float cameraLookUpOffset = 0.2f; // ±îÄ¡¹ß µé ¶§ Ä«¸Ş¶ó ¿Ã¶ó°¡´Â Á¤µµ
+    public float cameraLookUpOffset = 0.2f; // ê¹Œì¹˜ë°œ ë“¤ ë•Œ ì¹´ë©”ë¼ ì˜¬ë¼ê°€ëŠ” ì •ë„
 
     [Header("Camera Smooth")]
-    public float cameraMoveSpeed = 8f; // ½ÃÁ¡ ¹Ù²î´Â ¼Óµµ (Å¬¼ö·Ï ºü¸£°Ô ¹Ù²ñ)
+    public float cameraMoveSpeed = 8f; // ì‹œì  ë°”ë€ŒëŠ” ì†ë„ (í´ìˆ˜ë¡ ë¹ ë¥´ê²Œ ë°”ë€œ)
 
     void Start()
     {
@@ -45,29 +45,29 @@ public class Player_movement : MonoBehaviour
         moveInput = value.Get<Vector2>();
     }
 
-    // ´©¸£°í ÀÖ´Â µ¿¾È¸¸ ´Ş¸®±â
+    // ëˆ„ë¥´ê³  ìˆëŠ” ë™ì•ˆë§Œ ë‹¬ë¦¬ê¸°
     public void OnRun(InputValue value)
     {
         isRunning = value.isPressed;
     }
 
-    // ´©¸£°í ÀÖ´Â µ¿¾È¸¸ ±îÄ¡¹ß
+    // ëˆ„ë¥´ê³  ìˆëŠ” ë™ì•ˆë§Œ ê¹Œì¹˜ë°œ
     public void OnLookUp(InputValue value)
     {
         isLookingUp = value.isPressed;
     }
 
-    // ÇÑ ¹ø ´©¸£¸é ¾É°í, ´Ù½Ã ´©¸£¸é ÀÏ¾î³ª±â
+    // í•œ ë²ˆ ëˆ„ë¥´ë©´ ì•‰ê³ , ë‹¤ì‹œ ëˆ„ë¥´ë©´ ì¼ì–´ë‚˜ê¸°
     public void OnSit(InputValue value)
     {
-        if (!value.isPressed) return; // ¶¿ ¶§´Â ¹«½Ã
+        if (!value.isPressed) return; // ë—„ ë•ŒëŠ” ë¬´ì‹œ
 
         isSitting = !isSitting;
 
         if (isSitting)
         {
             controller.height = sitHeight;
-            // ¹ß À§Ä¡´Â ±×´ë·Î µÎ°í Å°¸¸ ÁÙÀÌ±â
+            // ë°œ ìœ„ì¹˜ëŠ” ê·¸ëŒ€ë¡œ ë‘ê³  í‚¤ë§Œ ì¤„ì´ê¸°
             controller.center = standCenter - new Vector3(0, (standHeight - sitHeight) / 2f, 0);
         }
         else
@@ -79,29 +79,29 @@ public class Player_movement : MonoBehaviour
 
     void Update()
     {
-        // »óÈ²¿¡ µû¶ó ¼Óµµ °í¸£±â (¾É¾Æ ÀÖÀ¸¸é ´Ş¸®±â ¹«½Ã)
+        // ìƒí™©ì— ë”°ë¼ ì†ë„ ê³ ë¥´ê¸° (ì•‰ì•„ ìˆìœ¼ë©´ ë‹¬ë¦¬ê¸° ë¬´ì‹œ)
         float speed = moveSpeed;
         if (isSitting) speed = sitSpeed;
         else if (isRunning) speed = RunningSpeed;
 
         Vector3 moveDirection = transform.right * moveInput.x + transform.forward * moveInput.y;
-        controller.Move(moveDirection * speed * Time.deltaTime);
+        controller.Move(moveDirection * speed * CheatManager.PlayerDelta);   // ì‹œê°„ ì •ì§€ ì¤‘ì—ë„ ë‚˜ëŠ” ì›€ì§ì„
 
         UpdateCameraHeight();
     }
 
-    // ¾É±â/±îÄ¡¹ß »óÅÂ¿¡ ¸ÂÃç Ä«¸Ş¶ó ³ôÀÌ¸¦ ºÎµå·´°Ô ¿Å±â±â
+    // ì•‰ê¸°/ê¹Œì¹˜ë°œ ìƒíƒœì— ë§ì¶° ì¹´ë©”ë¼ ë†’ì´ë¥¼ ë¶€ë“œëŸ½ê²Œ ì˜®ê¸°ê¸°
     void UpdateCameraHeight()
     {
         if (cameraTransform == null) return;
 
         Vector3 target = cameraStandPos;
         if (isSitting)
-            target.y -= cameraSitOffset;      // ¾ÉÀ¸¸é ³»·Á°¡°í
+            target.y -= cameraSitOffset;      // ì•‰ìœ¼ë©´ ë‚´ë ¤ê°€ê³ 
         else if (isLookingUp)
-            target.y += cameraLookUpOffset;   // ±îÄ¡¹ßÀÌ¸é ¿Ã¶ó°¨ (¾É¾Æ ÀÖÀ» ¶© ¹«½Ã)
+            target.y += cameraLookUpOffset;   // ê¹Œì¹˜ë°œì´ë©´ ì˜¬ë¼ê° (ì•‰ì•„ ìˆì„ ë• ë¬´ì‹œ)
 
         cameraTransform.localPosition = Vector3.Lerp(
-            cameraTransform.localPosition, target, cameraMoveSpeed * Time.deltaTime);
+            cameraTransform.localPosition, target, cameraMoveSpeed * CheatManager.PlayerDelta);
     }
 }

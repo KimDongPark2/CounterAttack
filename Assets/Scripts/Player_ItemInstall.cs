@@ -285,8 +285,8 @@ public class Player_ItemInstall : MonoBehaviour
 
     private void Warn(string message)
     {
-        if (Time.time - lastWarnTime < 2f) return;
-        lastWarnTime = Time.time;
+        if (Time.unscaledTime - lastWarnTime < 2f) return;
+        lastWarnTime = Time.unscaledTime;
         Debug.LogWarning("[ItemInstall] " + message);
     }
 }
