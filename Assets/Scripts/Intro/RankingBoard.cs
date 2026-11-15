@@ -37,6 +37,9 @@ public class RankingBoard : MonoBehaviour
 
     [Header("닫기")]
     public bool escToClose = true;
+    [Tooltip("Esc를 누르면 대신 눌러줄 뒤로 버튼 (비우면 같은 캔버스의 \"Return to Main\"을 찾음)\n" +
+             "뒤로 버튼이 메뉴를 다시 켜주니까, Esc도 그걸 눌러야 빈 화면이 안 남음")]
+    public Button backButton;
 
     private readonly List<Texture2D> loaded = new List<Texture2D>();
     private Color nameColor = Color.clear;
@@ -65,7 +68,19 @@ public class RankingBoard : MonoBehaviour
 
     private void Update()
     {
-        if (escToClose && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Close();
+        if (escToClose && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            if (backButton == null) backButton = FindBackButton();
+            if (backButton != null) backButton.onClick.Invoke();   // 뒤로 버튼과 똑같이 (메뉴 다시 켜기 + 순위표 캔버스 끄기)
+            else Close();
+        }
+    }
+
+    private Button FindBackButton()
+    {
+        foreach (Button b in transform.root.GetComponentsInChildren<Button>(true))
+            if (b.name == "Return to Main") return b;
+        return null;
     }
 
     // 뒤로 버튼의 On Click에 연결

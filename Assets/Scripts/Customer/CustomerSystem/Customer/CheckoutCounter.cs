@@ -39,7 +39,7 @@ public class CheckoutCounter : MonoBehaviour
 
     [Header("판매 가격")]
     [Tooltip("물건에 판매가(SellPrice)를 안 적었으면 주문 가격 × 이 배율로 팜")]
-    public float sellMarkup = 1.5f;
+    public float sellMarkup = 1.3f;
     [Tooltip("판매가를 이 단위로 반올림 (10이면 450원, 900원 …)")]
     public int roundTo = 10;
 

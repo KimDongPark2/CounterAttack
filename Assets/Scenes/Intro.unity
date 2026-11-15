@@ -17147,7 +17147,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HowToPlayPanel
   steps:
   - title: "\uC815\uBCF4 \uB4F1\uB85D\uD558\uAE30"
-    description: "\uD50C\uB808\uC774\uC5B4\uC758 \uC815\uBCF4\uB97C \uB4F1\uB85D\uD569\uB2C8\uB2E4."
+    description: "\uD50C\uB808\uC774\uC5B4\uC758 \uC815\uBCF4\uB97C \uB4F1\uB85D\uD55C\uB2E4."
     clip: {fileID: 32900000, guid: 49f4ab9b4fef27d4baefb969c54feadf, type: 3}
   - title: "\uD0DC\uBE14\uB9BF \uC0AC\uC6A9\uD558\uAE30"
     description: "TAB \uD639\uC740 ESC\uB97C \uC0AC\uC6A9\uD558\uC5EC \uD0DC\uBE14\uB9BF\uC744
@@ -17156,14 +17156,14 @@ MonoBehaviour:
     clip: {fileID: 32900000, guid: 2905aa2b8316df84fbf379a0b340cb85, type: 3}
   - title: "\uC8FC\uBB38\uD558\uAE30"
     description: "\uD0DC\uBE14\uB9BF\uC5D0\uC11C \uC8FC\uBB38\uD558\uAE30 \uBC84\uD2BC\uC744
-      \uB20C\uB7EC \uC8FC\uBB38 \uCC3D\uC744 \uC5F0\uB2E4. \uC74C\uC2DD/\uC7AC\uD654/\uBB3C\uAC74\uC744
-      \uC8FC\uBB38\uD560 \uC218 \uC788\uB2E4."
+      \uB20C\uB7EC \uC8FC\uBB38 \uCC3D\uC744 \uC5F0\uB2E4. \uC7AC\uD654\uC758 \uACBD\uC6B0
+      \uB300\uCD9C\uC774, \uBB3C\uAC74\uC758 \uACBD\uC6B0 \uAD8C\uCD1D\uC744 \uC989\uC2DC
+      \uAD6C\uB9E4 \uAC00\uB2A5\uD558\uB2E4."
     clip: {fileID: 32900000, guid: 818542fe14983d145a510a99710603d8, type: 3}
   - title: "\uC0C1\uD488 \uC9C4\uC5F4\uD558\uAE30"
-    description: "\uC0C1\uD488\uC744 \uC778\uBCA4\uD1A0\uB9AC\uC5D0 \uAC00\uC9C4
-      \uCC44\uB85C F\uB97C \uB20C\uB7EC \uBC30\uCE58 \uAC00\uB2A5\uD55C \uAD6C\uC5ED\uC5D0
-      F\uB97C \uB20C\uB7EC \uC9C4\uC5F4\uD560 \uC218 \uC788\uB2E4. \uD639\uC740 G\uB97C
-      \uB20C\uB7EC \uBC84\uB9B4 \uC218 \uC788\uB2E4."
+    description: "\uC0C1\uD488\uC744 F\uB85C \uC90D\uAC70\uB098 \uC9C4\uC5F4 \uAC00\uB2A5\uD55C
+      \uACF3\uC5D0 \uC9C4\uC5F4\uD560 \uC218 \uC788\uB2E4. G\uB97C \uB20C\uB7EC\uC11C
+      \uBC14\uB2E5\uC5D0 \uBC84\uB9B4 \uC218 \uC788\uB2E4."
     clip: {fileID: 32900000, guid: 8623297e988964c4480f5be0fe3ae336, type: 3}
   - title: "\uACC4\uC0B0\uD558\uAE30"
     description: "\uACC4\uC0B0\uB300 \uAD6C\uC5ED\uC5D0\uC120 \uC790\uB3D9\uC73C\uB85C
@@ -18952,7 +18952,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 553500206}
+      - m_Target: {fileID: 200005219}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
         m_Mode: 6

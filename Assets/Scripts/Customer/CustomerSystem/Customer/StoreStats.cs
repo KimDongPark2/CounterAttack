@@ -38,7 +38,7 @@ public static class StoreStats
     // 최종 점수(순위표) = 오늘 매출 × 별 배율 − 남은 빚
 
     // 별을 나누는 기준 (1명당 점수가 이 값 이상이면 그 별)  ★2, ★3, ★4, ★5
-    public static readonly float[] StarCuts = { -1f, 0f, 0.8f, 1.5f };
+    public static readonly float[] StarCuts = { 0.5f, 1.5f, 2.5f, 3.5f };   // 빠른 계산 +5 기준. 거의 다 빨리 계산하고 도둑도 잡아야 ★5
     // 별 배율  ★1, ★2, ★3, ★4, ★5
     public static readonly float[] StarMultipliers = { 0.5f, 0.8f, 1.0f, 1.3f, 1.6f };
 

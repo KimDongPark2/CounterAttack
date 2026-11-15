@@ -7,12 +7,15 @@ using UnityEngine;
 // 메뉴: Tools → 밸런스 → 시연용 적용
 //   시작 돈 1,500 → 5,000원 · 도둑 30% → 15% · 급한 손님 40% → 30%
 //   점심 러시 간격 6~8초 → 7~9초 · 퇴근 러시 5~7초 → 6~8초
+//   파는 값 = 사는 값 × 1.5 → × 1.3 · 도둑 잡으면 1,000원
 // 바꾼 뒤 씬 저장(Ctrl+S)하면 끝. Ctrl+Z로 되돌릴 수 있음
 public static class BalancePreset
 {
     private const int StartingMoney = 5000;
     private const float ThiefChance = 0.15f;
     private const float HurryChance = 0.30f;
+    private const float SellMarkup = 1.3f;
+    private const int ThiefReward = 1000;
 
     [MenuItem("Tools/밸런스/시연용 적용")]
     private static void Apply()
@@ -33,6 +36,8 @@ public static class BalancePreset
             log.AppendLine($"도둑: {sp.thiefChance * 100:0}% → {ThiefChance * 100:0}%");
             log.AppendLine($"급한 손님: {sp.hurryChance * 100:0}% → {HurryChance * 100:0}%");
             sp.thiefChance = ThiefChance;
+            log.AppendLine($"도둑 잡은 보상: {sp.thiefReward:N0} → {ThiefReward:N0}원");
+            sp.thiefReward = ThiefReward;
             sp.hurryChance = HurryChance;
             if (sp.phases != null)
             {
@@ -44,6 +49,14 @@ public static class BalancePreset
                 }
             }
             EditorUtility.SetDirty(sp);
+        }
+
+        foreach (CheckoutCounter cc in Object.FindObjectsByType<CheckoutCounter>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            Undo.RecordObject(cc, "밸런스 적용");
+            log.AppendLine($"파는 값: 사는 값 × {cc.sellMarkup} → × {SellMarkup}");
+            cc.sellMarkup = SellMarkup;
+            EditorUtility.SetDirty(cc);
         }
 
         if (log.Length == 0)

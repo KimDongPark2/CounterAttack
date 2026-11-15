@@ -378,6 +378,7 @@ public class Customer : MonoBehaviour
         {
             StoreStats.AddThiefCaught(spawner.thiefShotPoint);
             SoundManager.Play(Sfx.ThiefCaught);
+            if (spawner.state != null && spawner.thiefReward > 0) spawner.state.Earn(spawner.thiefReward);   // 도둑 잡은 보상
         }
         else
         {

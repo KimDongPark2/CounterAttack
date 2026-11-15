@@ -89,6 +89,8 @@ public class CustomerSpawner : MonoBehaviour
     public int wrongShotPoint = -5;
     public int thiefShotPoint = 3;
     public int thiefEscapePoint = -3;
+    [Tooltip("도둑을 잡으면 주는 돈 (원 · 매출에는 안 들어감)")]
+    public int thiefReward = 1000;
 
     public float DayTime { get; private set; }
     public bool DayRunning { get; private set; }
