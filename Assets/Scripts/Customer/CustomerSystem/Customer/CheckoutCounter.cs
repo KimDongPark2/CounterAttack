@@ -36,7 +36,6 @@ public class CheckoutCounter : MonoBehaviour
     public bool oneAtATime = false;
     [Tooltip("물건이 뿅 하고 커지며 나타나는 시간 (0이면 연출 없음)")]
     public float popDuration = 0.15f;
-    public AudioClip placeSound;
 
     [Header("판매 가격")]
     [Tooltip("물건에 판매가(SellPrice)를 안 적었으면 주문 가격 × 이 배율로 팜")]
@@ -48,9 +47,6 @@ public class CheckoutCounter : MonoBehaviour
     public float scanRange = 4f;
     [Tooltip("켜면 물건을 조준해야 찍힘. 끄면 클릭할 때마다 다음 물건이 찍힘")]
     public bool requireAim = true;
-    public AudioSource audioSource;
-    public AudioClip scanSound;
-    public AudioClip paySound;
 
     [Header("표시 (선택)")]
     [Tooltip("계산 중인 합계를 보여줄 글자")]
@@ -189,7 +185,7 @@ public class CheckoutCounter : MonoBehaviour
         pending.Add(ci);
         EnablePhysics(obj);   // Prepare 다음에 (물건이 고정되지 않고 떨어지게)
 
-        PlaySound(placeSound);
+        SoundManager.PlayAt(Sfx.CheckoutPlace, obj.transform.position);
         if (popDuration > 0f) StartCoroutine(Pop(obj.transform));
         UpdateTotalText();
     }
@@ -271,7 +267,7 @@ public class CheckoutCounter : MonoBehaviour
         ScannedCount++;
         pending.Remove(item);
         Destroy(item.gameObject);
-        PlaySound(scanSound);
+        SoundManager.Play(Sfx.ScanBeep);
 
         // 하나씩 모드: 찍었으면 다음 물건 올리기
         if (oneAtATime && waiting.Count > 0 && placing == null)
@@ -292,7 +288,7 @@ public class CheckoutCounter : MonoBehaviour
 
         queue.Remove(c);
         RefreshQueue();
-        PlaySound(paySound);
+        SoundManager.Play(Sfx.Pay);
         UpdateTotalText();
 
         if (c != null) c.Pay(paid);
@@ -327,11 +323,6 @@ public class CheckoutCounter : MonoBehaviour
         current = null;
         total = 0;
         UpdateTotalText();
-    }
-
-    private void PlaySound(AudioClip clip)
-    {
-        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
     }
 
     private void UpdateTotalText()

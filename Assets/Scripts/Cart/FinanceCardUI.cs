@@ -6,6 +6,8 @@ using UnityEngine.UI;
 //   대출 받기: 누르면 돈이 들어오고 빚이 늘어남 (이자를 넣으면 빚이 더 늘어남)
 //   빚 갚기:   누르면 돈을 내고 빚이 줄어듦
 // 장바구니/배달 없이 버튼 누르면 바로 적용
+// Popup 칸에 BankPopup을 넣으면: 버튼을 누를 때 바로 빌리거나 갚지 않고 대출 · 상환 팝업을 띄움
+//   (금액 · 이자 · 한도는 팝업 설정을 씀)
 public class FinanceCardUI : MonoBehaviour, IShopCategory
 {
     public enum FinanceType
@@ -19,6 +21,8 @@ public class FinanceCardUI : MonoBehaviour, IShopCategory
 
     [Header("연결")]
     public Player_State state;
+    [Tooltip("넣으면 버튼을 누를 때 이 팝업을 띄움 (원하는 만큼 빌리기 · 갚기)")]
+    public BankPopup popup;
 
     [Header("금액")]
     [Tooltip("한 번에 빌리는/갚는 돈(원). 빚 갚기에서 0이면 남은 빚을 한 번에 다 갚음")]
@@ -82,6 +86,11 @@ public class FinanceCardUI : MonoBehaviour, IShopCategory
     public void Use()
     {
         SoundManager.Play(Sfx.ButtonClick);
+        if (popup != null)
+        {
+            popup.Open();
+            return;
+        }
         if (!CanUse) return;
 
         if (type == FinanceType.Loan)
@@ -101,6 +110,17 @@ public class FinanceCardUI : MonoBehaviour, IShopCategory
     private void Refresh()
     {
         if (state == null) return;
+
+        // 팝업을 쓰면 카드는 여는 버튼만
+        if (popup != null)
+        {
+            SetText(amountText, "원하는 만큼");
+            SetText(infoText, type == FinanceType.Loan ? $"이자 {popup.interestPercent}% · 한도 {Player_State.Won(popup.maxDebt)}" : "가진 돈으로 갚기");
+            SetText(buttonText, type == FinanceType.Loan ? "빌리기" : "갚기");
+            SetText(debtText, "지금 빚 " + Player_State.Won(state.debt));
+            if (button) button.interactable = true;
+            return;
+        }
 
         if (type == FinanceType.Loan)
         {

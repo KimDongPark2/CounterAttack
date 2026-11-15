@@ -40,6 +40,8 @@ public static class IconFolderOrganizer
         { "btn_remove_normal.png", "Tablet/Buttons" },
         { "btn_remove_hover.png", "Tablet/Buttons" },
         { "btn_remove_pressed.png", "Tablet/Buttons" },
+        { "btn_disabled.png", "Tablet/Buttons" },
+        { "btn_remove_disabled.png", "Tablet/Buttons" },
         { "icon_info.png", "Tablet/Apps" },
         { "icon_settings.png", "Tablet/Apps" },
         { "icon_shop.png", "Tablet/Apps" },
@@ -49,6 +51,7 @@ public static class IconFolderOrganizer
         { "Logo2.png", "Logo" },
         { "Logo2-2.png", "Logo" },
         { "Logo2-2-1.png", "Logo" },
+        { "Logo(white).png", "Logo" },
     };
 
     // 폴더째로 정하는 곳 (Icon 기준 경로 → 새 폴더)
@@ -60,6 +63,8 @@ public static class IconFolderOrganizer
         ("shutter/TopHUD/Shutter", "Shutter"),
         ("Rank_sprites/Rank", "Rank"),
         ("RankBadge_sprites/Rank", "Rank"),
+        ("RankBadge_sprites (2)/Rank", "Rank"),
+        ("Bank", "Tablet/Finance"),
         ("TopHUD_sprites/TopHUD", "HUD/TopBar"),
         ("DebtTag_sprite/TopHUD", "HUD/TopBar"),
         ("counter_hud_sprites", "HUD/Counter"),

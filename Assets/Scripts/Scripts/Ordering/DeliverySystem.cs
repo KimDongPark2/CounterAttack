@@ -53,6 +53,7 @@ public class DeliverySystem : MonoBehaviour
 
         GameObject go = Instantiate(prefab, pos, rot);
         go.SetActive(true);
+        SoundManager.PlayAt(Sfx.DeliveryArrive, pos);
 
         var rb = go.GetComponent<Rigidbody>();
         if (rb != null)

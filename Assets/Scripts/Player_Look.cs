@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player_Look : MonoBehaviour
@@ -6,12 +6,12 @@ public class Player_Look : MonoBehaviour
     [Header("View Settings")]
     public Transform playerCamera;
     [Range(1f, 100f)]
-    public float moveSensitivity = 50f; // ½½¶óÀÌ´õ¿ë 1~100 °ª
+    public float moveSensitivity = 50f; // ìŠ¬ë¼ì´ë”ìš© 1~100 ê°’
 
-    [Tooltip("1~100 °¨µµ¸¦ ½ÇÁ¦ È¸Àü·®À¸·Î ¹Ù²Ù´Â ¹èÀ². ÀüÃ¼ÀûÀ¸·Î ³Ê¹« ºü¸£°Å³ª ´À¸®¸é ÀÌ°Í¸¸ Á¶Àı")]
+    [Tooltip("1~100 ê°ë„ë¥¼ ì‹¤ì œ íšŒì „ëŸ‰ìœ¼ë¡œ ë°”ê¾¸ëŠ” ë°°ìœ¨. ì „ì²´ì ìœ¼ë¡œ ë„ˆë¬´ ë¹ ë¥´ê±°ë‚˜ ëŠë¦¬ë©´ ì´ê²ƒë§Œ ì¡°ì ˆ")]
     public float sensitivityScale = 0.01f;
 
-    [SerializeField] private PlayerInput playerInput; // ºñ¿öµÎ¸é °°Àº ¿ÀºêÁ§Æ®¿¡¼­ Ã£À½
+    [SerializeField] private PlayerInput playerInput; // ë¹„ì›Œë‘ë©´ ê°™ì€ ì˜¤ë¸Œì íŠ¸ì—ì„œ ì°¾ìŒ
 
     private InputAction lookAction;
     private float xRotation = 0f;
@@ -25,6 +25,7 @@ public class Player_Look : MonoBehaviour
             playerInput = GetComponent<PlayerInput>();
 
         lookAction = playerInput.actions["Look"];
+        moveSensitivity = SensitivitySlider.Saved;   // ì„¤ì •ì—ì„œ ì €ì¥í•œ ê°ë„
         SetLookEnabled(true);
     }
 
@@ -47,11 +48,11 @@ public class Player_Look : MonoBehaviour
     {
         if (!canLook) return;
 
-        // ÀÌ¹ø ÇÁ·¹ÀÓ µ¿¾È ¸¶¿ì½º°¡ ¿òÁ÷ÀÎ ¾çÀ» Á÷Á¢ ÀĞ±â
+        // ì´ë²ˆ í”„ë ˆì„ ë™ì•ˆ ë§ˆìš°ìŠ¤ê°€ ì›€ì§ì¸ ì–‘ì„ ì§ì ‘ ì½ê¸°
         Vector2 lookInput = lookAction.ReadValue<Vector2>();
 
-        // ¸¶¿ì½º delta´Â ÀÌ¹Ì ÇÁ·¹ÀÓ´ç °ªÀÌ¶ó Time.deltaTimeÀ» °öÇÏÁö ¾ÊÀ½
-        float sensitivity = moveSensitivity * sensitivityScale; // 50 ¡æ 0.5
+        // ë§ˆìš°ìŠ¤ deltaëŠ” ì´ë¯¸ í”„ë ˆì„ë‹¹ ê°’ì´ë¼ Time.deltaTimeì„ ê³±í•˜ì§€ ì•ŠìŒ
+        float sensitivity = moveSensitivity * sensitivityScale; // 50 â†’ 0.5
         float mouseX = lookInput.x * sensitivity;
         float mouseY = lookInput.y * sensitivity;
 

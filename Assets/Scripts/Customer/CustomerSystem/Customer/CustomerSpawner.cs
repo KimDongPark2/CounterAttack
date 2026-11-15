@@ -96,6 +96,14 @@ public class CustomerSpawner : MonoBehaviour
     // 영업 준비 중인지, 남은 준비 시간 (PrepCountdownUI가 읽음)
     public bool Preparing { get; private set; }
     public float PrepTimeLeft { get; private set; }
+    // 지금 단계 이름 ("점심 러시" 등)
+    public string PhaseName => CurrentPhase()?.name ?? "";
+
+    [Header("소리 (파일은 SoundManager에)")]
+    [Tooltip("준비 시간이 이 초 이하로 남으면 1초마다 째깍 (PrepTick)")]
+    public int prepTickFrom = 5;
+    private int lastPrepSecond = -1;
+    private Phase lastPhase;
 
     private float spawnTimer;
 
@@ -132,6 +140,7 @@ public class CustomerSpawner : MonoBehaviour
         if (prepTime <= 0f) { StartDay(); return; }
         Preparing = true;
         PrepTimeLeft = prepTime;
+        lastPrepSecond = -1;
     }
 
     // 버튼에서 "바로 영업 시작"으로 쓰고 싶을 때
@@ -149,6 +158,8 @@ public class CustomerSpawner : MonoBehaviour
         DayRunning = true;
         StoreStats.Reset();
         UpdateClock();
+        lastPhase = CurrentPhase();
+        SoundManager.Play(Sfx.DayStart);   // 영업 시작
         onDayStart?.Invoke();
     }
 
@@ -157,6 +168,13 @@ public class CustomerSpawner : MonoBehaviour
         if (Preparing)
         {
             PrepTimeLeft -= Time.deltaTime;
+            // 마지막 몇 초는 1초마다 째깍
+            int sec = Mathf.CeilToInt(PrepTimeLeft);
+            if (sec != lastPrepSecond)
+            {
+                lastPrepSecond = sec;
+                if (sec > 0 && sec <= prepTickFrom) SoundManager.Play(Sfx.PrepTick);
+            }
             Keyboard kb = Keyboard.current;
             if (allowSkip && kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) PrepTimeLeft = 0f;
             if (PrepTimeLeft <= 0f) StartDay();
@@ -167,6 +185,14 @@ public class CustomerSpawner : MonoBehaviour
 
         DayTime += Time.deltaTime;
         UpdateClock();
+
+        // 단계가 바뀌면 (러시 · 마감) 소리. 첫 단계는 영업 시작 소리가 대신 남
+        Phase now = CurrentPhase();
+        if (now != lastPhase)
+        {
+            if (now != null && lastPhase != null) SoundManager.Play(Sfx.PhaseChange);
+            lastPhase = now;
+        }
 
         if (DayTime < stopSpawnTime)
         {
@@ -204,6 +230,7 @@ public class CustomerSpawner : MonoBehaviour
         if (NavMesh.SamplePosition(pos, out NavMeshHit hit, 3f, NavMesh.AllAreas)) pos = hit.position;
 
         GameObject go = Instantiate(prefab, pos, entrance.rotation);
+        SoundManager.PlayAt(Sfx.CustomerEnter, entrance.position);   // 딩동
         Customer c = go.GetComponent<Customer>();
         if (c == null) c = go.AddComponent<Customer>();
 
@@ -228,11 +255,15 @@ public class CustomerSpawner : MonoBehaviour
         }
         if (!DayRunning) return;
         DayTime = Mathf.Clamp(DayTime + seconds, 0f, dayLength);
+        UpdateClock();
+        // 끝까지 밀면 남은 손님을 기다리지 않고 바로 하루 끝
+        if (seconds > 0f && DayTime >= dayLength) EndDay();
     }
 
     private void EndDay()
     {
         DayRunning = false;
+        SoundManager.Play(Sfx.DayEnd);
         if (state != null) state.star = StoreStats.Stars;
         StoreStats.SaveBest(StoreStats.ScoreAfterDebt(state != null ? state.debt : 0));   // 인트로 화면 최고 점수
         Debug.Log($"[하루 끝] 손님 {StoreStats.Visitors}명, 계산 {StoreStats.Served}명, 매출 {Player_State.Won(StoreStats.Revenue)}, " +

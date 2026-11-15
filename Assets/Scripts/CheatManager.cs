@@ -5,11 +5,13 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // 치트 (태블릿 게임 설정의 치트 카드 + 단축키)
-//   돈 무한   (F1) : 돈이 줄면 바로 다시 채움. 끄면 켜기 전 돈으로 돌아감
-//   시간 정지 (F2) : 세상이 멈춤 (손님 · 시계 · 물리 · 배달). 나만 움직임
+//   돈 무한         : 돈이 줄면 바로 다시 채움. 끄면 켜기 전 돈으로 돌아감 (태블릿 버튼으로만)
+//   시간 정지 (F1) : 세상이 멈춤 (손님 · 시계 · 물리 · 배달). 나만 움직임
 //                    - 걷기 · 시점 · 줍기 · 진열 · 스캔 · 총 · 태블릿은 그대로
 //                    - 멈춘 동안 쏜 손님 · 던진 물건은 공중에 멈춰 있다가 풀리면 날아감
-//   시간 조절 (F3) : 켜져 있는 동안  ] 꾹 = 시계 앞으로 감기,  [ 꾹 = 뒤로 감기
+//   시간 조절       : 태블릿에서 켜 둔 동안  F3 꾹 = 시계 앞으로 감기,  F2 꾹 = 뒤로 감기
+//                    끝까지 밀면 바로 하루가 끝남 (남은 손님을 안 기다림)
+//   다시 소환 (F4) : 플레이어가 어딘가에 끼었을 때 시작 자리로 돌려보냄 (치트로 안 침 · 순위 그대로)
 //                    (시계만 움직임. 손님 · 돈은 그대로. 준비 시간 중이면 남은 준비 시간을 감음)
 // 버튼은 줄마다 켜기 / 끄기 두 개. 켜져 있으면 끄기 버튼만, 꺼져 있으면 켜기 버튼만 보임 (스크립트가 바꿔줌)
 // 치트를 한 번이라도 켜면 그 판은 순위표에 안 남음 (GameEndScreen이 확인)
@@ -39,6 +41,7 @@ public class CheatManager : MonoBehaviour
     public Button timeOff;
 
     [Header("연결 (비우면 자동으로 찾음)")]
+    public GameObject CheatMessage;
     public Player_State state;
     public CustomerSpawner spawner;
     public GameEndScreen endScreen;
@@ -48,13 +51,18 @@ public class CheatManager : MonoBehaviour
     public GameObject stopEffect;
 
     [Header("단축키")]
-    public Key moneyKey = Key.F1;
-    public Key stopKey = Key.F2;
-    public Key timeKey = Key.F3;
-    [Tooltip("시간 조절이 켜져 있을 때 꾹 누르면 뒤로 감기")]
-    public Key rewindKey = Key.LeftBracket;
-    [Tooltip("시간 조절이 켜져 있을 때 꾹 누르면 앞으로 감기")]
-    public Key forwardKey = Key.RightBracket;
+    [Tooltip("시간 정지 켜기 / 끄기")]
+    public Key timeStopKey = Key.F1;
+    [Tooltip("시간 조절이 켜져 있을 때 꾹 누르면 앞으로 감기 (시간 증가)")]
+    public Key clockForwardKey = Key.F3;
+    [Tooltip("시간 조절이 켜져 있을 때 꾹 누르면 뒤로 감기 (시간 감소)")]
+    public Key clockBackKey = Key.F2;
+
+    [Header("끼었을 때 다시 소환")]
+    [Tooltip("누르면 플레이어를 소환 자리로 옮김")]
+    public Key respawnKey = Key.F4;
+    [Tooltip("소환 자리 (비우면 게임 시작할 때 플레이어가 서 있던 자리)")]
+    public Transform respawnPoint;
 
     [Header("설정")]
     [Tooltip("돈 무한일 때 채워두는 돈")]
@@ -110,14 +118,13 @@ public class CheatManager : MonoBehaviour
         Keyboard kb = Keyboard.current;
         if (kb != null && !ended)
         {
-            if (kb[moneyKey].wasPressedThisFrame) ToggleMoney();
-            if (kb[stopKey].wasPressedThisFrame) ToggleStop();
-            if (kb[timeKey].wasPressedThisFrame) ToggleTime();
+            if (kb[timeStopKey].wasPressedThisFrame) ToggleStop();
+            if (kb[respawnKey].wasPressedThisFrame) Respawn();
 
             // 시간 조절: 꾹 누르는 동안 시계 감기 (시간 정지 중에도 됨)
             if (TimeMode && spawner != null)
             {
-                float dir = (kb[forwardKey].isPressed ? 1f : 0f) - (kb[rewindKey].isPressed ? 1f : 0f);
+                float dir = (kb[clockForwardKey].isPressed ? 1f : 0f) - (kb[clockBackKey].isPressed ? 1f : 0f);
                 if (dir != 0f) spawner.ShiftClock(dir * scrubSpeed * Time.unscaledDeltaTime);
             }
         }
@@ -190,13 +197,51 @@ public class CheatManager : MonoBehaviour
     {
         TimeMode = !TimeMode;
         if (TimeMode) Used();
-        Feedback(TimeMode ? "시간 조절 켜짐 · [ 뒤로  ] 앞으로 (꾹)" : "시간 조절 꺼짐");
+        Feedback(TimeMode ? "시간 조절 켜짐 · F3 앞으로  F2 뒤로 (꾹)" : "시간 조절 꺼짐");
+    }
+
+    // ---------- 다시 소환 ----------
+    private Transform player;
+    private Vector3 startPos;
+    private Quaternion startRot;
+    private bool startSaved;
+
+    private void Start()
+    {
+        Player_movement pm = FindAnyObjectByType<Player_movement>();
+        if (pm == null) return;
+        player = pm.transform;
+        startPos = player.position;
+        startRot = player.rotation;
+        startSaved = true;
+    }
+
+    public void Respawn()
+    {
+        if (player == null || (!startSaved && respawnPoint == null)) return;
+        Vector3 pos = respawnPoint != null ? respawnPoint.position : startPos;
+        Quaternion rot = respawnPoint != null ? respawnPoint.rotation : startRot;
+
+        // CharacterController가 켜져 있으면 위치를 바로 못 바꿔서 잠깐 끄고 옮김
+        CharacterController cc = player.GetComponent<CharacterController>();
+        bool ccOn = cc != null && cc.enabled;
+        if (ccOn) cc.enabled = false;
+        player.SetPositionAndRotation(pos, rot);
+        if (ccOn) cc.enabled = true;
+
+        SoundManager.Play(Sfx.ButtonClick);
+        if (notice != null)
+        {
+            notice.text = "시작 자리로 돌아왔어요";
+            noticeTimer = noticeTime;
+        }
     }
 
     // ---------- 공통 ----------
     private void Used()
     {
         UsedThisGame = true;
+        if (CheatMessage != null) CheatMessage.SetActive(true);
     }
 
     private void Feedback(string message)

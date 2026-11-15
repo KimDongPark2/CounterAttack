@@ -261,6 +261,7 @@ public class Player_ItemInstall : MonoBehaviour
         if (slot == null) return;
 
         GameObject installed = Instantiate(slot.itemPrefab, installPosition, installRotation);
+        SoundManager.PlayAt(Sfx.ItemPlace, installPosition);
         installed.tag = "Item";
         installed.SetActive(true);
 
