@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// 에디터 전용 (스프라이트 불러올 때 설정 자동). 빌드에는 안 들어가게 UNITY_EDITOR로 감쌈
+#if UNITY_EDITOR
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -49,3 +51,4 @@ public class TopHUDSpriteImporter : AssetPostprocessor
         ti.textureCompression = TextureImporterCompression.Uncompressed;
     }
 }
+#endif
