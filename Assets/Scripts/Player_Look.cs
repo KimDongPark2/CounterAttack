@@ -19,6 +19,9 @@ public class Player_Look : MonoBehaviour
 
     public bool CanLook => canLook;
 
+    // 마우스로 정한 카메라 위아래 회전 (반동 · 흔들림이 안 들어간 원래 값). CameraFeel이 여기에 반동을 더해서 씀
+    public Quaternion BaseCameraRotation => Quaternion.Euler(xRotation, 0f, 0f);
+
     private void Start()
     {
         if (playerInput == null)

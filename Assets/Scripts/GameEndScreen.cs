@@ -108,7 +108,7 @@ public class GameEndScreen : MonoBehaviour
 
         // 순위 등록 (명찰 없이 Game 씬부터 바로 실행했거나, 치트를 썼으면 등록 안 함)
         RankingStore.Result result = new RankingStore.Result();
-        if (CheatManager.UsedThisGame) Set(rankText, cheatText);
+        if (CheatManager.RecordBlocked) Set(rankText, cheatText);   // 관리자 설정에서 "치트를 써도 기록 인정"을 켜면 그대로 등록
         else if (PlayerSession.Active)
         {
             result = RankingStore.Submit(PlayerSession.Id, PlayerSession.Name, score, stars, StoreStats.Revenue, StoreStats.Served, PlayerSession.Photo);

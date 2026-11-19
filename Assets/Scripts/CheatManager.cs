@@ -15,11 +15,16 @@ using UnityEngine.UI;
 //                    (시계만 움직임. 손님 · 돈은 그대로. 준비 시간 중이면 남은 준비 시간을 감음)
 // 버튼은 줄마다 켜기 / 끄기 두 개. 켜져 있으면 끄기 버튼만, 꺼져 있으면 켜기 버튼만 보임 (스크립트가 바꿔줌)
 // 치트를 한 번이라도 켜면 그 판은 순위표에 안 남음 (GameEndScreen이 확인)
+//   단, 관리자 설정 "치트를 써도 기록 인정"을 켜면 치트를 써도 순위표 · 최고 점수에 남음
 // 단축키가 태블릿을 닫아도 먹게, 항상 켜져 있는 오브젝트(Canvas(Always))에 붙이기
 public class CheatManager : MonoBehaviour
 {
     // 이번 판에 치트를 쓴 적이 있는지 (Game 씬이 새로 열릴 때마다 false로)
     public static bool UsedThisGame { get; private set; }
+    // 관리자 설정: 치트를 써도 기록 인정 (AdminSettings가 넣어줌 · 판이 바뀌어도 유지)
+    public static bool AllowRecordWithCheat;
+    // 이번 판 기록을 남기면 안 되는지 (치트를 썼고, 기록 인정이 꺼져 있을 때)
+    public static bool RecordBlocked => UsedThisGame && !AllowRecordWithCheat;
     // 시간 정지 중인지
     public static bool TimeStopped { get; private set; }
     // 플레이어 쪽 스크립트가 쓰는 시간 (시간 정지 중에도 흘러감)
@@ -49,6 +54,10 @@ public class CheatManager : MonoBehaviour
     public TMP_Text notice;
     [Tooltip("시간 정지 중에만 켜지는 효과 (선택 · 예: 채도를 뺀 Volume, 화면 테두리 이미지)")]
     public GameObject stopEffect;
+    [Tooltip("치트 카드의 \"치트 활성화 클릭 시 미기록\" 글자 (선택). 기록 인정 설정에 맞춰 글자를 바꿔줌")]
+    public TMP_Text recordRuleText;
+    public string recordBlockedRule = "치트 활성화 클릭 시 미기록";
+    public string recordAllowedRule = "치트를 써도 기록돼요";
 
     [Header("단축키")]
     [Tooltip("시간 정지 켜기 / 끄기")]
@@ -101,6 +110,7 @@ public class CheatManager : MonoBehaviour
 
         if (notice != null) notice.text = "";
         if (stopEffect != null) stopEffect.SetActive(false);
+        if (recordRuleText != null) recordRuleText.text = AllowRecordWithCheat ? recordAllowedRule : recordBlockedRule;
         Refresh();
     }
 
@@ -241,7 +251,8 @@ public class CheatManager : MonoBehaviour
     private void Used()
     {
         UsedThisGame = true;
-        if (CheatMessage != null) CheatMessage.SetActive(true);
+        // "기록 안 남음" 안내는 기록이 실제로 막힐 때만
+        if (CheatMessage != null && !AllowRecordWithCheat) CheatMessage.SetActive(true);
     }
 
     private void Feedback(string message)

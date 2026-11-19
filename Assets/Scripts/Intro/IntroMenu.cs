@@ -134,6 +134,16 @@ public class IntroMenu : MonoBehaviour
     {
         if (loading || SceneShutter.Busy || Blocked || current < 0 || current >= rows.Count) return;
         IntroMenuRow row = rows[current];
+
+        // Shift를 누른 채 고르면 그 줄의 Shift 동작만 (예: 설정 + Shift = 관리자 비밀번호 창)
+        Keyboard kb = Keyboard.current;
+        if (kb != null && kb.shiftKey.isPressed && row.HasShiftAction)
+        {
+            SoundManager.Play(Sfx.MenuChoose);
+            row.ChooseWithShift();
+            return;
+        }
+
         SoundManager.Play(Sfx.MenuChoose);   // 소리 파일은 SoundManager에
         row.onChoose?.Invoke();
 
@@ -169,6 +179,7 @@ public class IntroMenu : MonoBehaviour
         get
         {
             if (StaffBadge.IsOpen) return true;
+            if (AdminPasswordPanel.IsOpen || AdminPasswordPanel.SettingsOpen || AdminSettingsPanel.IsOpen) return true;   // 관리자 비밀번호 · 설정 창
             if (blockingPanels != null)
                 foreach (GameObject p in blockingPanels)
                     if (p != null && p.activeInHierarchy) return true;

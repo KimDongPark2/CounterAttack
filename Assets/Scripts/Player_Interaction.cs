@@ -47,6 +47,12 @@ public class Player_Interaction : MonoBehaviour
 
     public const int GunIndex = 6;   // handIndex가 6이면 권총을 든 상태
 
+    // 총알이 실제로 나간 순간 알려줌 (WeaponFeel · CameraFeel이 반동에 씀). 스캐너 클릭에는 안 불림
+    public static event System.Action OnGunFired;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetGunFired() => OnGunFired = null;
+
     // 지금 권총을 손에 들고 있는지
     public bool GunInHand => state != null && state.hasGun && state.handIndex == GunIndex;
 
@@ -301,13 +307,23 @@ public class Player_Interaction : MonoBehaviour
             pistolSlot.gameObject.SetActive(slotVisible);
         }
 
-        // 6번을 골랐으면 총 꺼내기 (켜면서 open 애니메이션), 다른 칸이면 바로 숨기기
+        // 6번을 골랐으면 총 꺼내기, 다른 칸이면 넣기
+        // GunMotion이 있으면 꺼내기 · 넣기 모션 (넣기는 모션이 끝난 뒤에 총을 끔). 없으면 예전처럼 바로 켜고 끔
         bool show = GunInHand;
         if (show != gunShown)
         {
             gunShown = show;
-            if (handGun != null) handGun.SetActive(show);
-            if (show && gunAnim != null) gunAnim.SetBool("IsOpen", true);
+            if (show)
+            {
+                if (handGun != null) handGun.SetActive(true);
+                if (gunAnim != null) gunAnim.SetBool("IsOpen", true);
+                if (Motion != null) Motion.Draw();
+            }
+            else if (handGun != null)
+            {
+                if (Motion != null) Motion.Holster(() => { if (!gunShown && handGun != null) handGun.SetActive(false); });
+                else handGun.SetActive(false);
+            }
         }
 
         // 6번 칸 노란색(선택) 표시
@@ -403,14 +419,29 @@ public class Player_Interaction : MonoBehaviour
     {
         if (tabletOpen || !value.isPressed) return;
         if (!GunInHand) return;                                      // 권총을 들고 있을 때만
-        if (!GunReady()) return;                                     // 꺼내는 중이거나 쏘는 중이면 무시
+        if (!GunReady()) return;                                     // 꺼내는 중 · 쏘는 중이면 무시 (Animator 상태)
+        if (Motion != null && Motion.Busy) return;                   // 꺼내기 · 넣기 모션 중이면 무시 (GunMotion)
+        if (Reload != null && Reload.IsReloading) return;            // 재장전 중엔 쏘기만 막음 (Animator 상태는 그대로)
+        if (FPSHandRig.Instance != null) FPSHandRig.Instance.PulseTrigger();   // 검지 당김 (빈 탄창이어도)
+        if (Reload != null && !Reload.TryUseRound()) return;         // 총알이 없으면 딸깍 (GunReload)
 
         if (gunShoot != null) gunShoot.Fire();          // 애니메이션 + 레이캐스트 (손님 맞추기)
         else if (gunAnim != null) gunAnim.SetTrigger("Fire"); // SimpleShoot가 없으면 애니메이션만
+        else return;                                          // 쏠 게 없음
+
+        OnGunFired?.Invoke();                                 // 반동 · 화면 진동
     }
 
-    // 총을 다 꺼내서 idle 상태로 가만히 있을 때만 true
-    private bool GunReady()
+    // 탄약 · 재장전 (실행할 때 자동으로 붙어서, 처음 쓸 때 찾음)
+    private GunReload gunReload;
+    private GunReload Reload => gunReload != null ? gunReload : (gunReload = GetComponent<GunReload>());
+
+    // 꺼내기 · 넣기 · 쏘기 모션 (실행할 때 자동으로 붙어서, 처음 쓸 때 찾음)
+    private GunMotion gunMotion;
+    private GunMotion Motion => gunMotion != null ? gunMotion : (gunMotion = GetComponent<GunMotion>());
+
+    // 총을 다 꺼내서 idle 상태로 가만히 있을 때만 true (Animator 상태만 봄). GunReload도 씀
+    public bool GunReady()
     {
         if (gunAnim == null) return true;
         if (gunAnim.IsInTransition(0)) return false;

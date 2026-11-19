@@ -267,7 +267,8 @@ public class CustomerSpawner : MonoBehaviour
         DayRunning = false;
         SoundManager.Play(Sfx.DayEnd);
         if (state != null) state.star = StoreStats.Stars;
-        StoreStats.SaveBest(StoreStats.ScoreAfterDebt(state != null ? state.debt : 0));   // 인트로 화면 최고 점수
+        if (!CheatManager.RecordBlocked)   // 치트를 썼으면 순위표처럼 최고 점수도 안 남김 (기록 인정 설정이 켜져 있으면 남김)
+            StoreStats.SaveBest(StoreStats.ScoreAfterDebt(state != null ? state.debt : 0));   // 인트로 화면 최고 점수
         Debug.Log($"[하루 끝] 손님 {StoreStats.Visitors}명, 계산 {StoreStats.Served}명, 매출 {Player_State.Won(StoreStats.Revenue)}, " +
                   $"화남 {StoreStats.Angry}, 도둑 잡음 {StoreStats.ThievesCaught} / 놓침 {StoreStats.ThievesEscaped}, 별 {StoreStats.Stars}개, " +
                   $"최종 점수 {StoreStats.ScoreAfterDebt(state != null ? state.debt : 0):N0}점 " +

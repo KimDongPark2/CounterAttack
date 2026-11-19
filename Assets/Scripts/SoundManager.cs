@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -6,108 +6,115 @@ using UnityEngine.SceneManagement;
 using ConvenienceStore.Tablet;
 using Random = UnityEngine.Random;
 
-// È¿°úÀ½ ÀÌ¸§ ¸ñ·Ï
-// ¼ıÀÚ´Â Inspector¿¡ ³Ö¾îµĞ ¼Ò¸®°¡ ¹Ğ¸®Áö ¾Ê°Ô °íÁ¤ÇÑ °ªÀÌ¶ó Áö¿ì°Å³ª ¹Ù²ÙÁö ¸»±â (»õ·Î ¸¸µé ¶© ºó ¹øÈ£¿¡ Ãß°¡)
+// íš¨ê³¼ìŒ ì´ë¦„ ëª©ë¡
+// ìˆ«ìëŠ” Inspectorì— ë„£ì–´ë‘” ì†Œë¦¬ê°€ ë°€ë¦¬ì§€ ì•Šê²Œ ê³ ì •í•œ ê°’ì´ë¼ ì§€ìš°ê±°ë‚˜ ë°”ê¾¸ì§€ ë§ê¸° (ìƒˆë¡œ ë§Œë“¤ ë• ë¹ˆ ë²ˆí˜¸ì— ì¶”ê°€)
 public enum Sfx
 {
     None = 0,
-    // ÀÎÆ®·Î ¡¤ È­¸é ÀüÈ¯
+    // ì¸íŠ¸ë¡œ Â· í™”ë©´ ì „í™˜
     MenuMove = 10, MenuChoose = 11, ShutterDrop = 13, ShutterLand = 14,
-    // ÅÂºí¸´ ¡¤ »óÁ¡ (Àå¹Ù±¸´Ï ´ã±â ¡¤ ¾÷±×·¹ÀÌµå ¡¤ ´ëÃâµµ ButtonClick)
+    // íƒœë¸”ë¦¿ Â· ìƒì  (ì¥ë°”êµ¬ë‹ˆ ë‹´ê¸° Â· ì—…ê·¸ë ˆì´ë“œ Â· ëŒ€ì¶œë„ ButtonClick)
     TabletOpen = 20, TabletClose = 21, ButtonClick = 22, OrderDone = 24,
-    // ÇÏ·ç ÁøÇà
+    // í•˜ë£¨ ì§„í–‰
     PrepTick = 30, DayStart = 31, PhaseChange = 32, DayEnd = 33,
-    // ÇÃ·¹ÀÌ¾î ¡¤ ¹°°Ç
+    // í”Œë ˆì´ì–´ Â· ë¬¼ê±´
     ItemPickup = 40, ItemPlace = 41, DeliveryArrive = 44,
-    // °è»ê´ë
+    // ê³„ì‚°ëŒ€
     CheckoutPlace = 50, ScanBeep = 51, Pay = 52,
-    // ¼Õ´Ô
+    // ì†ë‹˜
     CustomerEnter = 60, CustomerAngry = 61, ThiefRun = 62, ThiefEscaped = 63,
-    // ±ÇÃÑ
+    // ê¶Œì´
     GunDraw = 70, GunShot = 71, BodyHit = 72, ThiefCaught = 73,
+    // ê¶Œì´ ì¬ì¥ì „ (GunReload)
+    // GunReload = ì¬ì¥ì „ ì†Œë¦¬ í•œ ë²ˆì— (MagOut Â· MagIn Â· SlideRackì´ ë‹¤ ë¹„ì–´ ìˆì„ ë•Œë§Œ ì”€)
+    // GunSlideRelease = ìŠ¬ë¼ì´ë“œ ë©ˆì¹˜ë¥¼ ëˆŒëŸ¬ ì•ìœ¼ë¡œ "ì² ì»¥" (ë¹„ì–´ ìˆìœ¼ë©´ GunSlideRackìœ¼ë¡œ ëŒ€ì‹ )
+    GunEmpty = 74, GunMagOut = 75, GunMagIn = 76, GunSlideRack = 77, GunReload = 78, GunSlideRelease = 79,
 }
 
-// ºê±İ ÀÌ¸§ ¸ñ·Ï
+// ë¸Œê¸ˆ ì´ë¦„ ëª©ë¡
 public enum Bgm { None = 0, Intro = 1, Prep = 2, Day = 3, Rush = 4, Closing = 5, Result = 6 }
 
 public enum SoundBus { Master, Bgm, Sfx }
 
-// ¼Ò¸® ÀüºÎ¸¦ ÇÑ °÷¿¡¼­ °ü¸®
-// - º¼·ı: Audio Mixer(MainMixer)°¡ ¸ÃÀ½. ¼Ò¸®´Â ¹Í¼­ÀÇ BGM ¡¤ SFX ±×·ìÀ¸·Î ³ª°¨
-//   ¼³Á¤ È­¸é ½½¶óÀÌ´õ ¡æ SoundManager.SetVolume(SoundBus.Bgm, 0~1) ¡æ ¹Í¼­ º¼·ıÀÌ ¹Ù²î°í ÀúÀåµÊ
-// - È¿°úÀ½: ¸ñ·Ï¿¡¼­ Ä­À» Ã£¾Æ ¼Ò¸® ÆÄÀÏ¸¸ ²ø¾î´Ù ³ÖÀ¸¸é ³¡. ºñ¾î ÀÖ´Â Ä­Àº Á¶¿ëÈ÷ ³Ñ¾î°¨
-// - ºê±İ: BgmDirector°¡ »óÈ²¿¡ ¸Â°Ô Æ²¾îÁÜ (¹Ù²ğ ¶§ ºÎµå·´°Ô °ãÄ¡¸é¼­ ³Ñ¾î°¨)
-// - ÅÂºí¸´À» ¿­¸é ºê±İÀÌ »ìÂ¦ ÀÛ¾ÆÁü
-// Intro ¾À¿¡ "SoundManager" ¿ÀºêÁ§Æ®·Î µÎ¸é ¾ÀÀÌ ¹Ù²î¾îµµ °è¼Ó ³²À½ (SceneShutterÃ³·³)
-// ´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­:  SoundManager.Play(Sfx.ScanBeep);   SoundManager.PlayAt(Sfx.CustomerEnter, À§Ä¡);
+// ì†Œë¦¬ ì „ë¶€ë¥¼ í•œ ê³³ì—ì„œ ê´€ë¦¬
+// - ë³¼ë¥¨: Audio Mixer(MainMixer)ê°€ ë§¡ìŒ. ì†Œë¦¬ëŠ” ë¯¹ì„œì˜ BGM Â· SFX ê·¸ë£¹ìœ¼ë¡œ ë‚˜ê°
+//   ì„¤ì • í™”ë©´ ìŠ¬ë¼ì´ë” â†’ SoundManager.SetVolume(SoundBus.Bgm, 0~1) â†’ ë¯¹ì„œ ë³¼ë¥¨ì´ ë°”ë€Œê³  ì €ì¥ë¨
+// - íš¨ê³¼ìŒ: ëª©ë¡ì—ì„œ ì¹¸ì„ ì°¾ì•„ ì†Œë¦¬ íŒŒì¼ë§Œ ëŒì–´ë‹¤ ë„£ìœ¼ë©´ ë. ë¹„ì–´ ìˆëŠ” ì¹¸ì€ ì¡°ìš©íˆ ë„˜ì–´ê°
+// - ë¸Œê¸ˆ: BgmDirectorê°€ ìƒí™©ì— ë§ê²Œ í‹€ì–´ì¤Œ (ë°”ë€” ë•Œ ë¶€ë“œëŸ½ê²Œ ê²¹ì¹˜ë©´ì„œ ë„˜ì–´ê°)
+// - íƒœë¸”ë¦¿ì„ ì—´ë©´ ë¸Œê¸ˆì´ ì‚´ì§ ì‘ì•„ì§
+// Intro ì”¬ì— "SoundManager" ì˜¤ë¸Œì íŠ¸ë¡œ ë‘ë©´ ì”¬ì´ ë°”ë€Œì–´ë„ ê³„ì† ë‚¨ìŒ (SceneShutterì²˜ëŸ¼)
+// ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ:  SoundManager.Play(Sfx.ScanBeep);   SoundManager.PlayAt(Sfx.CustomerEnter, ìœ„ì¹˜);
 public class SoundManager : MonoBehaviour
 {
     [Serializable]
     public class SfxEntry
     {
-        [Tooltip("ÀÚµ¿À¸·Î Ã¤¿öÁü")] public string name;
+        [Tooltip("ìë™ìœ¼ë¡œ ì±„ì›Œì§")] public string name;
         public Sfx id;
-        [Tooltip("¿©·¯ °³ ³ÖÀ¸¸é ±×Áß ÇÏ³ª¸¦ ·£´ıÀ¸·Î (¹ß¼Ò¸®¡¤ÃÑ¼Ò¸®Ã³·³ ÀÚÁÖ ³ª´Â ¼Ò¸®¿¡ ÁÁÀ½)")]
+        [Tooltip("ì—¬ëŸ¬ ê°œ ë„£ìœ¼ë©´ ê·¸ì¤‘ í•˜ë‚˜ë¥¼ ëœë¤ìœ¼ë¡œ (ë°œì†Œë¦¬Â·ì´ì†Œë¦¬ì²˜ëŸ¼ ìì£¼ ë‚˜ëŠ” ì†Œë¦¬ì— ì¢‹ìŒ)")]
         public AudioClip[] clips;
         [Range(0f, 1f)] public float volume = 1f;
-        [Tooltip("³ô³·ÀÌ¸¦ ÀÌ »çÀÌ¿¡¼­ ·£´ıÀ¸·Î (1 = ¿ø·¡). °°Àº ¼Ò¸®°¡ ¹İº¹µÅµµ ´ú Áú¸²")]
+        [Tooltip("ë†’ë‚®ì´ë¥¼ ì´ ì‚¬ì´ì—ì„œ ëœë¤ìœ¼ë¡œ (1 = ì›ë˜). ê°™ì€ ì†Œë¦¬ê°€ ë°˜ë³µë¼ë„ ëœ ì§ˆë¦¼")]
         public Vector2 pitch = Vector2.one;
     }
 
     [Serializable]
     public class BgmEntry
     {
-        [Tooltip("ÀÚµ¿À¸·Î Ã¤¿öÁü")] public string name;
+        [Tooltip("ìë™ìœ¼ë¡œ ì±„ì›Œì§")] public string name;
         public Bgm id;
         public AudioClip clip;
         [Range(0f, 1f)] public float volume = 0.6f;
-        [Tooltip("²ô¸é ÇÑ ¹ø¸¸ (°á°ú È­¸é Â¡±Û °°Àº °Í)")]
+        [Tooltip("ë„ë©´ í•œ ë²ˆë§Œ (ê²°ê³¼ í™”ë©´ ì§•ê¸€ ê°™ì€ ê²ƒ)")]
         public bool loop = true;
     }
 
     public static SoundManager Instance { get; private set; }
 
-    [Header("¹Í¼­ (º¼·ıÀº ¹Í¼­°¡ ¸ÃÀ½)")]
-    [Tooltip("MainMixer. ºñ¿ì¸é ¾Æ·¡ º¼·ı °ªÀ» ¼Ò¸®¿¡ Á÷Á¢ °öÇÔ")]
+    [Header("ë¯¹ì„œ (ë³¼ë¥¨ì€ ë¯¹ì„œê°€ ë§¡ìŒ)")]
+    [Tooltip("MainMixer. ë¹„ìš°ë©´ ì•„ë˜ ë³¼ë¥¨ ê°’ì„ ì†Œë¦¬ì— ì§ì ‘ ê³±í•¨")]
     public AudioMixer mixer;
-    [Tooltip("ºñ¿ì¸é ¹Í¼­¿¡¼­ \"BGM\" ±×·ìÀ» ÀÚµ¿À¸·Î Ã£À½")]
+    [Tooltip("ë¹„ìš°ë©´ ë¯¹ì„œì—ì„œ \"BGM\" ê·¸ë£¹ì„ ìë™ìœ¼ë¡œ ì°¾ìŒ")]
     public AudioMixerGroup bgmGroup;
-    [Tooltip("ºñ¿ì¸é ¹Í¼­¿¡¼­ \"SFX\" ±×·ìÀ» ÀÚµ¿À¸·Î Ã£À½")]
+    [Tooltip("ë¹„ìš°ë©´ ë¯¹ì„œì—ì„œ \"SFX\" ê·¸ë£¹ì„ ìë™ìœ¼ë¡œ ì°¾ìŒ")]
     public AudioMixerGroup sfxGroup;
-    [Tooltip("¹Í¼­¿¡¼­ ExposeÇÑ ÀÌ¸§ (Exposed Parameters¿¡ ÀûÀº ÀÌ¸§°ú ¶È°°ÀÌ)")]
+    [Tooltip("ë¯¹ì„œì—ì„œ Exposeí•œ ì´ë¦„ (Exposed Parametersì— ì ì€ ì´ë¦„ê³¼ ë˜‘ê°™ì´)")]
     public string masterParam = "MasterVolume";
     public string bgmParam = "BgmVolume";
     public string sfxParam = "SfxVolume";
 
-    [Header("º¼·ı 0 ~ 1 (Ã³À½ °ª ¡¤ ¼³Á¤ È­¸é¿¡¼­ ¹Ù²Ù¸é ÀúÀåµÊ)")]
+    [Header("ë³¼ë¥¨ 0 ~ 1 (ì²˜ìŒ ê°’ Â· ì„¤ì • í™”ë©´ì—ì„œ ë°”ê¾¸ë©´ ì €ì¥ë¨)")]
     [Range(0f, 1f)] public float master = 1f;
     [Range(0f, 1f)] public float bgm = 0.8f;
     [Range(0f, 1f)] public float sfx = 1f;
 
-    [Header("ºê±İ")]
-    [Tooltip("ÅÂºí¸´À» ¿­¸é ºê±İÀ» ÀÌ¸¸Å­À¸·Î ÁÙÀÓ (1ÀÌ¸é ¾È ÁÙÀÓ)")]
+    [Header("ë¸Œê¸ˆ")]
+    [Tooltip("íƒœë¸”ë¦¿ì„ ì—´ë©´ ë¸Œê¸ˆì„ ì´ë§Œí¼ìœ¼ë¡œ ì¤„ì„ (1ì´ë©´ ì•ˆ ì¤„ì„)")]
     [Range(0f, 1f)] public float tabletDuck = 0.5f;
-    [Tooltip("ÁØºñ ¡¤ ·¯½Ã ¡¤ ¸¶°¨ ºê±İ Ä­ÀÌ ºñ¾î ÀÖÀ¸¸é ¿µ¾÷(Day) ºê±İÀ» ´ë½Å Æ²±â")]
+    [Tooltip("ì¤€ë¹„ Â· ëŸ¬ì‹œ Â· ë§ˆê° ë¸Œê¸ˆ ì¹¸ì´ ë¹„ì–´ ìˆìœ¼ë©´ ì˜ì—…(Day) ë¸Œê¸ˆì„ ëŒ€ì‹  í‹€ê¸°")]
     public bool fallbackToDay = true;
     public BgmEntry[] bgmList;
 
-    [Header("3D ¼Ò¸® (¼Õ´Ô ¡¤ ¹è´ŞÃ³·³ À§Ä¡°¡ ÀÖ´Â ¼Ò¸®)")]
-    [Tooltip("ÀÌ °Å¸® ¾È¿¡¼­´Â Á¦ÀÏ Å©°Ô (¸ÅÀåÀÌ 5¹è Å©±â¶ó ³Ë³ËÇÏ°Ô)")]
+    [Header("3D ì†Œë¦¬ (ì†ë‹˜ Â· ë°°ë‹¬ì²˜ëŸ¼ ìœ„ì¹˜ê°€ ìˆëŠ” ì†Œë¦¬)")]
+    [Tooltip("ì´ ê±°ë¦¬ ì•ˆì—ì„œëŠ” ì œì¼ í¬ê²Œ (ë§¤ì¥ì´ 5ë°° í¬ê¸°ë¼ ë„‰ë„‰í•˜ê²Œ)")]
     public float minDistance = 5f;
-    [Tooltip("ÀÌ °Å¸®ºÎÅÍ´Â °ÅÀÇ ¾È µé¸²")]
+    [Tooltip("ì´ ê±°ë¦¬ë¶€í„°ëŠ” ê±°ì˜ ì•ˆ ë“¤ë¦¼")]
     public float maxDistance = 60f;
-    [Tooltip("µ¿½Ã¿¡ ³¯ ¼ö ÀÖ´Â È¿°úÀ½ ¼ö")]
+    [Tooltip("ë™ì‹œì— ë‚  ìˆ˜ ìˆëŠ” íš¨ê³¼ìŒ ìˆ˜")]
     public int voices = 12;
 
-    [Header("È®ÀÎ¿ë")]
-    [Tooltip("ÄÑ¸é ¼Ò¸®¸¦ ³¾ ¶§¸¶´Ù Console¿¡ ÀÌ¸§ÀÌ ÂïÈû (¼Ò¸®°¡ ¾È ³¯ ¶§ ¿øÀÎ Ã£±â¿ë ¡¤ ´Ù µÇ¸é ²ô±â)")]
+    [Header("í™•ì¸ìš©")]
+    [Tooltip("ì¼œë©´ ì†Œë¦¬ë¥¼ ë‚¼ ë•Œë§ˆë‹¤ Consoleì— ì´ë¦„ì´ ì°í˜ (ì†Œë¦¬ê°€ ì•ˆ ë‚  ë•Œ ì›ì¸ ì°¾ê¸°ìš© Â· ë‹¤ ë˜ë©´ ë„ê¸°)")]
     public bool logEveryPlay = false;
 
-    [Header("È¿°úÀ½ (Ä­¿¡ ¼Ò¸® ÆÄÀÏ¸¸ ³ÖÀ¸¸é µÊ)")]
+    [Header("íš¨ê³¼ìŒ (ì¹¸ì— ì†Œë¦¬ íŒŒì¼ë§Œ ë„£ìœ¼ë©´ ë¨)")]
     public SfxEntry[] sfxList;
 
-    // ---------- ´Ù¸¥ ½ºÅ©¸³Æ®¿¡¼­ ºÎ¸£´Â °Íµé (SoundManager°¡ ¾øÀ¸¸é ¾Æ¹« ÀÏµµ ¾È ÇÔ) ----------
+    // ---------- ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸ì—ì„œ ë¶€ë¥´ëŠ” ê²ƒë“¤ (SoundManagerê°€ ì—†ìœ¼ë©´ ì•„ë¬´ ì¼ë„ ì•ˆ í•¨) ----------
     public static void Play(Sfx id) { if (Instance != null) Instance.PlayVoice(id, null); }
+    // ê·¸ ì¹¸ì— ì†Œë¦¬ íŒŒì¼ì´ ë“¤ì–´ ìˆëŠ”ì§€ (ë¹„ì–´ ìˆìœ¼ë©´ false)
+    public static bool Has(Sfx id) => Instance != null && Instance.sfxMap.TryGetValue(id, out SfxEntry e)
+                                      && e.clips != null && e.clips.Length > 0 && e.clips[0] != null;
     public static void PlayAt(Sfx id, Vector3 position) { if (Instance != null) Instance.PlayVoice(id, position); }
     public static void PlayBgm(Bgm id, float fade = 1f) { if (Instance != null) Instance.SwitchBgm(id, fade); }
     public static void StopBgm(float fade = 1f) { if (Instance != null) Instance.SwitchBgm(Bgm.None, fade); }
@@ -119,7 +126,7 @@ public class SoundManager : MonoBehaviour
         return bus == SoundBus.Master ? Instance.master : bus == SoundBus.Bgm ? Instance.bgm : Instance.sfx;
     }
 
-    // ¼³Á¤ È­¸é ½½¶óÀÌ´õ¿¡¼­ ºÎ¸£±â (0 ~ 1, ÀúÀåµÊ)
+    // ì„¤ì • í™”ë©´ ìŠ¬ë¼ì´ë”ì—ì„œ ë¶€ë¥´ê¸° (0 ~ 1, ì €ì¥ë¨)
     public static void SetVolume(SoundBus bus, float value)
     {
         if (Instance == null) return;
@@ -131,10 +138,10 @@ public class SoundManager : MonoBehaviour
         Instance.ApplyMixer();
     }
 
-    // 0 ~ 1 ¡æ ¹Í¼­ dB (-80 = ¹«À½, 0 = ¿ø·¡ Å©±â)
+    // 0 ~ 1 â†’ ë¯¹ì„œ dB (-80 = ë¬´ìŒ, 0 = ì›ë˜ í¬ê¸°)
     public static float ToDecibel(float value) => value <= 0.0001f ? -80f : Mathf.Log10(value) * 20f;
 
-    // ---------- ³»ºÎ ----------
+    // ---------- ë‚´ë¶€ ----------
     private class BgmChannel
     {
         public AudioSource source;
@@ -159,7 +166,7 @@ public class SoundManager : MonoBehaviour
 
     private void Awake()
     {
-        // ¾ÀÀ» ´Ù½Ã ºÒ·¯¿À¸é ÇÏ³ª ´õ »ı±â´Ï±î ¿ø·¡ ÀÖ´ø °Í¸¸ ³²±â±â
+        // ì”¬ì„ ë‹¤ì‹œ ë¶ˆëŸ¬ì˜¤ë©´ í•˜ë‚˜ ë” ìƒê¸°ë‹ˆê¹Œ ì›ë˜ ìˆë˜ ê²ƒë§Œ ë‚¨ê¸°ê¸°
         if (Instance != null && Instance != this)
         {
             duplicate = true;
@@ -208,7 +215,7 @@ public class SoundManager : MonoBehaviour
         }
     }
 
-    // ¹Í¼­ º¼·ıÀº Awake¿¡¼­ ¹Ù²Ù¸é ¾È ¸ÔÇô¼­ Start¿¡¼­
+    // ë¯¹ì„œ ë³¼ë¥¨ì€ Awakeì—ì„œ ë°”ê¾¸ë©´ ì•ˆ ë¨¹í˜€ì„œ Startì—ì„œ
     private void Start()
     {
         if (!duplicate) ApplyMixer();
@@ -229,12 +236,12 @@ public class SoundManager : MonoBehaviour
         if (!ok && !mixerWarned)
         {
             mixerWarned = true;
-            Debug.LogWarning($"[SoundManager] ¹Í¼­¿¡¼­ '{masterParam}' ¡¤ '{bgmParam}' ¡¤ '{sfxParam}' Áß¿¡ Expose ¾È µÈ °Ô ÀÖ¾î¿ä. " +
-                             "±×·ì Volume ¿ìÅ¬¸¯ ¡æ Expose ÇÏ°í Exposed Parameters¿¡¼­ ÀÌ¸§À» ¶È°°ÀÌ ¹Ù²ãÁÖ¼¼¿ä.", this);
+            Debug.LogWarning($"[SoundManager] ë¯¹ì„œì—ì„œ '{masterParam}' Â· '{bgmParam}' Â· '{sfxParam}' ì¤‘ì— Expose ì•ˆ ëœ ê²Œ ìˆì–´ìš”. " +
+                             "ê·¸ë£¹ Volume ìš°í´ë¦­ â†’ Expose í•˜ê³  Exposed Parametersì—ì„œ ì´ë¦„ì„ ë˜‘ê°™ì´ ë°”ê¿”ì£¼ì„¸ìš”.", this);
         }
     }
 
-    // ¹Í¼­°¡ ÀÖÀ¸¸é º¼·ıÀº ¹Í¼­°¡ ¸ÃÀ¸´Ï±î ¿©±â¼± 1
+    // ë¯¹ì„œê°€ ìˆìœ¼ë©´ ë³¼ë¥¨ì€ ë¯¹ì„œê°€ ë§¡ìœ¼ë‹ˆê¹Œ ì—¬ê¸°ì„  1
     private float BgmGain => mixer != null ? 1f : bgm * master;
     private float SfxGain => mixer != null ? 1f : sfx * master;
 
@@ -257,20 +264,20 @@ public class SoundManager : MonoBehaviour
         if (!duplicate && Instance == this) Instance = null;
     }
 
-    // ¾ÀÀÌ ¹Ù²ğ ¶§¸¶´Ù: ¼Ò¸®¸¦ µè´Â ±Í(Audio Listener)°¡ ÀÖ´ÂÁö È®ÀÎ
+    // ì”¬ì´ ë°”ë€” ë•Œë§ˆë‹¤: ì†Œë¦¬ë¥¼ ë“£ëŠ” ê·€(Audio Listener)ê°€ ìˆëŠ”ì§€ í™•ì¸
     private void HandleSceneLoaded(UnityEngine.SceneManagement.Scene scene, LoadSceneMode mode)
     {
         if (duplicate || Instance != this) return;
         if (FindAnyObjectByType<AudioListener>() == null)
-            Debug.LogWarning($"[SoundManager] '{scene.name}' ¾À¿¡ Audio Listener°¡ ¾ø¾î¼­ ¼Ò¸®°¡ ¾È µé·Á¿ä. Player Ä«¸Ş¶ó¿¡ Audio Listener¸¦ ºÙ¿©ÁÖ¼¼¿ä.", this);
+            Debug.LogWarning($"[SoundManager] '{scene.name}' ì”¬ì— Audio Listenerê°€ ì—†ì–´ì„œ ì†Œë¦¬ê°€ ì•ˆ ë“¤ë ¤ìš”. Player ì¹´ë©”ë¼ì— Audio Listenerë¥¼ ë¶™ì—¬ì£¼ì„¸ìš”.", this);
     }
 
-    // ºñ¾î ÀÖ´Â Ä­À» ºÒ·¶À» ¶§ (¿¡µğÅÍ¿¡¼­¸¸, Ä­¸¶´Ù ÇÑ ¹ø)
+    // ë¹„ì–´ ìˆëŠ” ì¹¸ì„ ë¶ˆë €ì„ ë•Œ (ì—ë””í„°ì—ì„œë§Œ, ì¹¸ë§ˆë‹¤ í•œ ë²ˆ)
     private readonly HashSet<Sfx> warnedEmpty = new HashSet<Sfx>();
     private void NoteEmpty(Sfx id)
     {
         if (!Application.isEditor || !warnedEmpty.Add(id)) return;
-        Debug.Log($"[SoundManager] {id} Ä­ÀÌ ºñ¾î ÀÖ¾î¼­ ¼Ò¸®°¡ ¾È ³ª¿ä ({Describe(id)})", this);
+        Debug.Log($"[SoundManager] {id} ì¹¸ì´ ë¹„ì–´ ìˆì–´ì„œ ì†Œë¦¬ê°€ ì•ˆ ë‚˜ìš” ({Describe(id)})", this);
     }
 
     private void HandleTablet(bool open)
@@ -293,7 +300,7 @@ public class SoundManager : MonoBehaviour
 
     private void Update()
     {
-        float dt = Time.unscaledDeltaTime;   // ÀÏ½ÃÁ¤Áö Áß¿¡µµ ºê±İÀº °è¼Ó
+        float dt = Time.unscaledDeltaTime;   // ì¼ì‹œì •ì§€ ì¤‘ì—ë„ ë¸Œê¸ˆì€ ê³„ì†
         duck = Mathf.MoveTowards(duck, duckTarget, dt * 2f);
 
         foreach (BgmChannel c in channels)
@@ -313,11 +320,11 @@ public class SoundManager : MonoBehaviour
         AudioClip clip = e.clips[Random.Range(0, e.clips.Length)];
         if (clip == null) { NoteEmpty(id); return; }
 
-        // °°Àº ¼Ò¸®°¡ ÇÑ¼ø°£¿¡ ¿©·¯ ¹ø °ãÃÄ¼­ Å©°Ô ÅÍÁöÁö ¾Ê°Ô
+        // ê°™ì€ ì†Œë¦¬ê°€ í•œìˆœê°„ì— ì—¬ëŸ¬ ë²ˆ ê²¹ì³ì„œ í¬ê²Œ í„°ì§€ì§€ ì•Šê²Œ
         if (lastPlayed.TryGetValue(id, out float last) && Time.unscaledTime - last < 0.03f) return;
         lastPlayed[id] = Time.unscaledTime;
 
-        if (logEveryPlay) Debug.Log($"[SoundManager] ¢º {id} ({clip.name}){(position.HasValue ? " ¡¤ 3D" : "")}", this);
+        if (logEveryPlay) Debug.Log($"[SoundManager] â–¶ {id} ({clip.name}){(position.HasValue ? " Â· 3D" : "")}", this);
 
         AudioSource s = NextVoice();
         s.transform.position = position ?? transform.position;
@@ -331,7 +338,7 @@ public class SoundManager : MonoBehaviour
         s.Play();
     }
 
-    // ³î°í ÀÖ´Â ½ºÇÇÄ¿¸¦ ¸ÕÀú ¾²°í, ´Ù ¹Ù»Ú¸é µ¹¾Æ°¡¸ç ¾¸
+    // ë†€ê³  ìˆëŠ” ìŠ¤í”¼ì»¤ë¥¼ ë¨¼ì € ì“°ê³ , ë‹¤ ë°”ì˜ë©´ ëŒì•„ê°€ë©° ì”€
     private AudioSource NextVoice()
     {
         for (int i = 0; i < pool.Length; i++)
@@ -366,7 +373,7 @@ public class SoundManager : MonoBehaviour
         BgmEntry next = Resolve(id);
         BgmChannel active = channels[activeChannel];
 
-        // °°Àº °îÀÌ¸é ²÷Áö ¾Ê°í ±×´ë·Î (¿¹: ·¯½Ã ºê±İ Ä­ÀÌ ºñ¾î¼­ ¿µ¾÷ ºê±İÀ» °è¼Ó Æ®´Â °æ¿ì)
+        // ê°™ì€ ê³¡ì´ë©´ ëŠì§€ ì•Šê³  ê·¸ëŒ€ë¡œ (ì˜ˆ: ëŸ¬ì‹œ ë¸Œê¸ˆ ì¹¸ì´ ë¹„ì–´ì„œ ì˜ì—… ë¸Œê¸ˆì„ ê³„ì† íŠ¸ëŠ” ê²½ìš°)
         if (next != null && active.entry == next && active.source.isPlaying)
         {
             active.target = 1f;
@@ -389,7 +396,7 @@ public class SoundManager : MonoBehaviour
         c.source.Play();
     }
 
-    // ---------- Inspector ¸ñ·Ï ÀÚµ¿ Ã¤¿ì±â ----------
+    // ---------- Inspector ëª©ë¡ ìë™ ì±„ìš°ê¸° ----------
     private void Reset() => FillLists();
     private void OnValidate()
     {
@@ -397,7 +404,7 @@ public class SoundManager : MonoBehaviour
         if (Application.isPlaying && Instance == this)
         {
             BuildMaps();
-            ApplyMixer();   // ÇÃ·¹ÀÌ Áß¿¡ Inspector º¼·ıÀ» ¿òÁ÷ÀÌ¸é ¹Ù·Î µé¸®°Ô
+            ApplyMixer();   // í”Œë ˆì´ ì¤‘ì— Inspector ë³¼ë¥¨ì„ ì›€ì§ì´ë©´ ë°”ë¡œ ë“¤ë¦¬ê²Œ
         }
     }
 
@@ -418,7 +425,7 @@ public class SoundManager : MonoBehaviour
                 e = new SfxEntry { id = id, volume = 1f, pitch = varied ? new Vector2(0.94f, 1.06f) : Vector2.one };
             }
             bool empty = e.clips == null || e.clips.Length == 0 || e.clips[0] == null;
-            e.name = $"{id} ¡¤ {Describe(id)}{(empty ? "  (ºñ¾î ÀÖÀ½)" : "")}";
+            e.name = $"{id} Â· {Describe(id)}{(empty ? "  (ë¹„ì–´ ìˆìŒ)" : "")}";
             s.Add(e);
         }
         sfxList = s.ToArray();
@@ -432,7 +439,7 @@ public class SoundManager : MonoBehaviour
                 foreach (BgmEntry x in bgmList)
                     if (x != null && x.id == id && (e == null || x.clip != null)) e = x;
             if (e == null) e = new BgmEntry { id = id, volume = 0.6f, loop = id != Bgm.Result };
-            e.name = $"{id} ¡¤ {Describe(id)}{(e.clip == null ? "  (ºñ¾î ÀÖÀ½)" : "")}";
+            e.name = $"{id} Â· {Describe(id)}{(e.clip == null ? "  (ë¹„ì–´ ìˆìŒ)" : "")}";
             b.Add(e);
         }
         bgmList = b.ToArray();
@@ -442,32 +449,38 @@ public class SoundManager : MonoBehaviour
     {
         switch (id)
         {
-            case Sfx.MenuMove: return "ÀÎÆ®·Î ¸Ş´º ÁÙ ¿Å±æ ¶§";
-            case Sfx.MenuChoose: return "ÀÎÆ®·Î ¸Ş´º °í¸¦ ¶§";
-            case Sfx.ShutterDrop: return "¼ÅÅÍ ³»·Á¿Ã ¶§";
-            case Sfx.ShutterLand: return "¼ÅÅÍ ¹Ù´Ú¿¡ ´êÀ» ¶§";
-            case Sfx.TabletOpen: return "ÅÂºí¸´ ¿­ ¶§";
-            case Sfx.TabletClose: return "ÅÂºí¸´ ´İÀ» ¶§";
-            case Sfx.ButtonClick: return "¹öÆ° (Àå¹Ù±¸´Ï ´ã±â ¡¤ ¾÷±×·¹ÀÌµå ¡¤ ´ëÃâ ¡¤ ÅÇ ¡¤ µÚ·Î)";
-            case Sfx.OrderDone: return "ÁÖ¹®(°áÁ¦) ¼º°ø";
-            case Sfx.PrepTick: return "ÁØºñ ½Ã°£ ¸¶Áö¸· 5ÃÊ ¶Èµü";
-            case Sfx.DayStart: return "¿µ¾÷ ½ÃÀÛ";
-            case Sfx.PhaseChange: return "´Ü°è ¹è³Ê (Á¡½É ·¯½Ã µî)";
-            case Sfx.DayEnd: return "ÇÏ·ç ³¡";
-            case Sfx.ItemPickup: return "¹°°Ç Áİ±â";
-            case Sfx.ItemPlace: return "¼±¹İ¿¡ ¹°°Ç ³õ±â (3D)";
-            case Sfx.DeliveryArrive: return "¹è´Ş ¹°°Ç ¶³¾îÁü (3D)";
-            case Sfx.CheckoutPlace: return "¼Õ´ÔÀÌ °è»ê´ë¿¡ ¹°°Ç ¿Ã¸²";
-            case Sfx.ScanBeep: return "¹ÙÄÚµå Âï±â";
-            case Sfx.Pay: return "¼Õ´Ô °áÁ¦ ¿Ï·á";
-            case Sfx.CustomerEnter: return "¼Õ´Ô µé¾î¿È (ÀÔ±¸ ¡¤ 3D)";
-            case Sfx.CustomerAngry: return "¼Õ´Ô È­³ª¼­ ³ª°¨ (3D)";
-            case Sfx.ThiefRun: return "µµµÏÀÌ µµ¸ÁÄ¡±â ½ÃÀÛ (3D)";
-            case Sfx.ThiefEscaped: return "µµµÏ ³õÄ§";
-            case Sfx.GunDraw: return "±ÇÃÑ ²¨³»±â";
-            case Sfx.GunShot: return "ÃÑ ½î±â";
-            case Sfx.BodyHit: return "»ç¶÷ ¸ÂÀ½ (3D)";
-            case Sfx.ThiefCaught: return "µµµÏ ÀâÀ½";
+            case Sfx.MenuMove: return "ì¸íŠ¸ë¡œ ë©”ë‰´ ì¤„ ì˜®ê¸¸ ë•Œ";
+            case Sfx.MenuChoose: return "ì¸íŠ¸ë¡œ ë©”ë‰´ ê³ ë¥¼ ë•Œ";
+            case Sfx.ShutterDrop: return "ì…”í„° ë‚´ë ¤ì˜¬ ë•Œ";
+            case Sfx.ShutterLand: return "ì…”í„° ë°”ë‹¥ì— ë‹¿ì„ ë•Œ";
+            case Sfx.TabletOpen: return "íƒœë¸”ë¦¿ ì—´ ë•Œ";
+            case Sfx.TabletClose: return "íƒœë¸”ë¦¿ ë‹«ì„ ë•Œ";
+            case Sfx.ButtonClick: return "ë²„íŠ¼ (ì¥ë°”êµ¬ë‹ˆ ë‹´ê¸° Â· ì—…ê·¸ë ˆì´ë“œ Â· ëŒ€ì¶œ Â· íƒ­ Â· ë’¤ë¡œ)";
+            case Sfx.OrderDone: return "ì£¼ë¬¸(ê²°ì œ) ì„±ê³µ";
+            case Sfx.PrepTick: return "ì¤€ë¹„ ì‹œê°„ ë§ˆì§€ë§‰ 5ì´ˆ ë˜‘ë”±";
+            case Sfx.DayStart: return "ì˜ì—… ì‹œì‘";
+            case Sfx.PhaseChange: return "ë‹¨ê³„ ë°°ë„ˆ (ì ì‹¬ ëŸ¬ì‹œ ë“±)";
+            case Sfx.DayEnd: return "í•˜ë£¨ ë";
+            case Sfx.ItemPickup: return "ë¬¼ê±´ ì¤ê¸°";
+            case Sfx.ItemPlace: return "ì„ ë°˜ì— ë¬¼ê±´ ë†“ê¸° (3D)";
+            case Sfx.DeliveryArrive: return "ë°°ë‹¬ ë¬¼ê±´ ë–¨ì–´ì§ (3D)";
+            case Sfx.CheckoutPlace: return "ì†ë‹˜ì´ ê³„ì‚°ëŒ€ì— ë¬¼ê±´ ì˜¬ë¦¼";
+            case Sfx.ScanBeep: return "ë°”ì½”ë“œ ì°ê¸°";
+            case Sfx.Pay: return "ì†ë‹˜ ê²°ì œ ì™„ë£Œ";
+            case Sfx.CustomerEnter: return "ì†ë‹˜ ë“¤ì–´ì˜´ (ì…êµ¬ Â· 3D)";
+            case Sfx.CustomerAngry: return "ì†ë‹˜ í™”ë‚˜ì„œ ë‚˜ê° (3D)";
+            case Sfx.ThiefRun: return "ë„ë‘‘ì´ ë„ë§ì¹˜ê¸° ì‹œì‘ (3D)";
+            case Sfx.ThiefEscaped: return "ë„ë‘‘ ë†“ì¹¨";
+            case Sfx.GunDraw: return "ê¶Œì´ êº¼ë‚´ê¸°";
+            case Sfx.GunShot: return "ì´ ì˜ê¸°";
+            case Sfx.BodyHit: return "ì‚¬ëŒ ë§ìŒ (3D)";
+            case Sfx.ThiefCaught: return "ë„ë‘‘ ì¡ìŒ";
+            case Sfx.GunEmpty: return "ì´ì•Œ ì—†ìŒ (ë”¸ê¹)";
+            case Sfx.GunMagOut: return "íƒ„ì°½ ë¹¼ê¸°";
+            case Sfx.GunMagIn: return "íƒ„ì°½ ë¼ìš°ê¸°";
+            case Sfx.GunSlideRack: return "ìŠ¬ë¼ì´ë“œ ë‹¹ê¸°ê¸° (ì² ì»¥)";
+            case Sfx.GunReload: return "ì¬ì¥ì „ (í†µì§¸ë¡œ Â· íƒ„ì°½ Â· ìŠ¬ë¼ì´ë“œ ì†Œë¦¬ê°€ ë‹¤ ë¹„ì—ˆì„ ë•Œ)";
+            case Sfx.GunSlideRelease: return "ìŠ¬ë¼ì´ë“œ ë©ˆì¹˜ í’€ê¸° (ì² ì»¥ Â· ë¹„ë©´ SlideRack)";
         }
         return "";
     }
@@ -476,12 +489,12 @@ public class SoundManager : MonoBehaviour
     {
         switch (id)
         {
-            case Bgm.Intro: return "ÀÎÆ®·Î È­¸é";
-            case Bgm.Prep: return "¿µ¾÷ ÁØºñ 30ÃÊ (ºñ¸é Day)";
-            case Bgm.Day: return "Æò¼Ò ¿µ¾÷";
-            case Bgm.Rush: return "Á¡½É ¡¤ Åğ±Ù ·¯½Ã (ºñ¸é Day)";
-            case Bgm.Closing: return "¸¶°¨ (ºñ¸é Day)";
-            case Bgm.Result: return "ÇÏ·ç ³¡ (ÇÑ ¹ø¸¸)";
+            case Bgm.Intro: return "ì¸íŠ¸ë¡œ í™”ë©´";
+            case Bgm.Prep: return "ì˜ì—… ì¤€ë¹„ 30ì´ˆ (ë¹„ë©´ Day)";
+            case Bgm.Day: return "í‰ì†Œ ì˜ì—…";
+            case Bgm.Rush: return "ì ì‹¬ Â· í‡´ê·¼ ëŸ¬ì‹œ (ë¹„ë©´ Day)";
+            case Bgm.Closing: return "ë§ˆê° (ë¹„ë©´ Day)";
+            case Bgm.Result: return "í•˜ë£¨ ë (í•œ ë²ˆë§Œ)";
         }
         return "";
     }
